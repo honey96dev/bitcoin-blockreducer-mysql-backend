@@ -61,7 +61,7 @@ process.on('message', function(data) {
     }
    
     dbConn1.end((err) => {
-        console.log("close connect");
+        // console.log("close connect");
         // The connection is terminated gracefully
         // Ensures all previously enqueued queries are still
         // before sending a COM_QUIT packet to the MySQL server.

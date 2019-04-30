@@ -22,20 +22,24 @@ app.use(express.static( './public' ));
 
 // appService.InsertInit();
 //appService.InsertInit();
-appService.StoreOrderBookData();
-appService.StoreAllTransactions();
+// appService.StoreOrderBookData();
+// appService.StoreAllTransactions();
+//
+// appService.SetUrl();
+// setInterval(() => {
+//     appService.Get5MLastTradePrice();
+// }, 120000);
 
-appService.SetUrl();
-setInterval(() => {
-    appService.Get5MLastTradePrice();
-}, 120000);
+bitmexService.readOrderBook();
+bitmexService.readTrade();
 
-bitmexService.getLastTimestamp('5m', function (startTime) {
-    if (startTime.length > 0) {
-        bitmexService.downloadBitmexData('5m', startTime[0].timestamp);
-    } else {
-        bitmexService.downloadBitmexData('5m', '');
-    }
+bitmexService.getLastTimestamp4Bucket('5m', function (startTime) {
+    bitmexService.downloadBitmexData('5m', startTime);
+    // if (startTime.length > 0) {
+    //     bitmexService.downloadBitmexData('5m', startTime[0].timestamp);
+    // } else {
+    //     bitmexService.downloadBitmexData('5m', '');
+    // }
 });
 // bitmexService.downloadBitmexData('5m', '');
 
