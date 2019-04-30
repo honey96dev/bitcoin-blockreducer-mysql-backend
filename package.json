@@ -1,0 +1,31 @@
+{
+  "name": "bitmextomysql_v1.0.0",
+  "version": "1.0.0",
+  "description": "This is terminal application to store data from bitemx to mysql database",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js",
+    "dev": "babel-watch server.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "bitmex-realtime-api": "^0.4.0",
+    "body-parser": "^1.18.3",
+    "child_process": "^1.0.2",
+    "cors": "^2.8.5",
+    "express": "^4.16.4",
+    "mysql2": "^1.6.4",
+    "path": "^0.12.7",
+    "request": "^2.88.0",
+    "sprintf-js": "^1.1.2",
+    "string-to-json": "^0.1.0"
+  },
+  "devDependencies": {
+    "babel-cli": "^6.26.0",
+    "babel-preset-env": "^1.7.0",
+    "babel-watch": "^2.0.8"
+  }
+}
