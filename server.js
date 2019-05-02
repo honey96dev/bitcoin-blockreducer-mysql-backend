@@ -33,19 +33,21 @@ app.use(express.static( './public' ));
 bitmexService.readOrderBook();
 bitmexService.readTrade();
 
-bitmexService.getLastTimestamp4Bucket('5m', function (startTime) {
-    bitmexService.downloadBitmexData('5m', startTime);
-    // if (startTime.length > 0) {
-    //     bitmexService.downloadBitmexData('5m', startTime[0].timestamp);
-    // } else {
-    //     bitmexService.downloadBitmexData('5m', '');
-    // }
+bitmexService.getLastTimestamp4Bucket('1h', function (startTime) {
+    bitmexService.downloadBitmexData('1h', startTime);
 });
-// bitmexService.downloadBitmexData('5m', '');
 
-app.get('/', (req, res, next) => {
-    res.sendFile(path.join(__dirname, './public/index.html'));
-})
+bitmexService.getLastTimestamp4Bucket('1m', function (startTime) {
+    bitmexService.downloadBitmexData('1m', startTime);
+});
+
+// bitmexService.getLastTimestamp4Bucket('1m', function (startTime) {
+//     bitmexService.downloadBitmex1mData(startTime);
+// });
+
+// app.get('/', (req, res, next) => {
+//     res.sendFile(path.join(__dirname, './public/index.html'));
+// });
 
 app.listen(port, () => {
     console.log('BitmexToMysql server running on port : ' + port);
