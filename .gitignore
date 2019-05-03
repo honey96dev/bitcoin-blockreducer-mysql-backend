@@ -76,3 +76,4 @@ typings/
 .fusebox/
 .idea/
 _core/config.js
+package-lock.json

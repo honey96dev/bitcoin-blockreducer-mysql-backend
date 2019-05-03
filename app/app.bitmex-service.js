@@ -334,8 +334,8 @@ service.commitData = function() {
 
 service.calculateFFT = function(binSize, startTime) {
     let dbConn = new mysql.createConnection(config.mysql);
-    let sql = sprintf("SELECT * FROM (SELECT `id`, `timestamp`, `open`, `high`, `low`, `close` FROM `bitmex_data_%s_view` WHERE `timestamp` <= '%s' ORDER BY `timestamp` DESC LIMIT 500) `tmp` ORDER BY `timestamp`;", binSize, startTime);
-    // let sql = sprintf("SELECT * FROM (SELECT `id`, `timestamp`, IFNULL(`open`, 0) `open`, IFNULL(`high`, 0) `high`, IFNULL(`low`, 0) `low`, IFNULL(`close`, 0) `close` FROM `bitmex_data_%s_view` WHERE `timestamp` BETWEEN '2015-09-25T12:05:00.000Z' AND '2019-09-31T23:59:00.100Z' ORDER BY `timestamp` DESC) `tmp` ORDER BY `timestamp`;", binSize);
+    // let sql = sprintf("SELECT * FROM (SELECT `id`, `timestamp`, `open`, `high`, `low`, `close` FROM `bitmex_data_%s_view` WHERE `timestamp` <= '%s' ORDER BY `timestamp` DESC LIMIT 500) `tmp` ORDER BY `timestamp`;", binSize, startTime);
+    let sql = sprintf("SELECT * FROM (SELECT `id`, `timestamp`, IFNULL(`open`, 0) `open`, IFNULL(`high`, 0) `high`, IFNULL(`low`, 0) `low`, IFNULL(`close`, 0) `close` FROM `bitmex_data_%s_view` WHERE `timestamp` BETWEEN '2015-09-25T12:05:00.000Z' AND '2019-09-31T23:59:00.100Z' ORDER BY `timestamp` DESC) `tmp` ORDER BY `timestamp`;", binSize);
     // sql = sprintf("INSERT INTO `hidden_orders` SET ?");
     console.log(sql);
     dbConn.query(sql, null, (error, results, fields) => {
