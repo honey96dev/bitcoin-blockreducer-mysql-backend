@@ -321,7 +321,18 @@ service.commitData = function() {
         orderIDs = orderIDs.filter(function(value, index, arr) {
             return value == item.trdMatchID;
         });
-        buffer.push(item);
+        buffer.push([
+            item.timestamp,
+            item.symbol,
+            item.side,
+            item.size,
+            item.price,
+            item.tickDirection,
+            item.trdMatchID,
+            item.grossValue,
+            item.homeNotional,
+            item.foreignNotional
+        ]);
         // sql = sprintf("INSERT INTO `orders`(`timestamp`, `symbol`, `side`, `size`, `price`, `tickDirection`, `trdMatchID`, `grossValue`, `homeNotional`, `foreignNotional`) SELECT * FROM (SELECT '%s' `timestamp`, '%s' `symbol`, '%s' `side`, '%s' `size`, '%s' `price`, '%s' `tickDirection`, '%s' `trdMatchID`, '%s' `grossValue`, '%s' `homeNotional`, '%s' `foreignNotional`) AS `tmp` WHERE NOT EXISTS (SELECT `id` FROM `orders` WHERE `trdMatchID` = '%s') LIMIT 0, 1;",
         //     item.timestamp, item.symbol, item.side, item.size, item.price, item.tickDirection, item.trdMatchID,
         //     item.grossValue, item.homeNotional, item.foreignNotional, item.trdMatchID);
@@ -336,6 +347,7 @@ service.commitData = function() {
     }
     if (buffer.length > 0) {
         sql = sprintf("INSERT INTO `orders`(`timestamp`, `symbol`, `side`, `size`, `price`, `tickDirection`, `trdMatchID`, `grossValue`, `homeNotional`, `foreignNotional`) VALUES ?");
+        // sql = sprintf("INSERT INTO `hidden_orders` SET ?");
         // console.log(sql);
         dbConn.query(sql, [buffer], (error, results, fields) => {
             if (error) {
@@ -349,7 +361,18 @@ service.commitData = function() {
         hiddenOrderIDs = hiddenOrderIDs.filter(function(value, index, arr) {
             return value == item.trdMatchID;
         });
-        buffer.push(item);
+        buffer.push([
+            item.timestamp,
+            item.symbol,
+            item.side,
+            item.size,
+            item.price,
+            item.tickDirection,
+            item.trdMatchID,
+            item.grossValue,
+            item.homeNotional,
+            item.foreignNotional
+        ]);
         // sql = sprintf("INSERT INTO `hidden_orders`(`timestamp`, `symbol`, `side`, `size`, `price`, `tickDirection`, `trdMatchID`, " +
         //     "`grossValue`, `homeNotional`, `foreignNotional`) " +
         //     "SELECT * FROM (SELECT '%s' `timestamp`, '%s' `symbol`, '%s' `side`, '%s' `size`, '%s' `price`, '%s' `tickDirection`, '%s' `trdMatchID`, '%s' `grossValue`, '%s' `homeNotional`, '%s' `foreignNotional`) AS `tmp` WHERE NOT EXISTS (SELECT `id` FROM `hidden_orders` WHERE `trdMatchID` = '%s') LIMIT 0, 1;",
@@ -364,6 +387,7 @@ service.commitData = function() {
     }
     if (buffer.length > 0) {
         sql = sprintf("INSERT INTO `hidden_orders`(`timestamp`, `symbol`, `side`, `size`, `price`, `tickDirection`, `trdMatchID`, `grossValue`, `homeNotional`, `foreignNotional`) VALUES ?");
+        // sql = sprintf("INSERT INTO `hidden_orders` SET ?");
         // console.log(sql);
         dbConn.query(sql, [buffer], (error, results, fields) => {
             if (error) {
