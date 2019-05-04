@@ -42,6 +42,10 @@ bitmexService.getLastTimestamp4Bucket('1m', function (startTime) {
     bitmexService.downloadBitmexData('1m', startTime);
 });
 
+bitmexService.getLastTimestamp4Bucket('5m', function (startTime) {
+    bitmexService.downloadBitmexData('5m', startTime);
+});
+
 // bitmexService.getLastTimestamp4Bucket('1m', function (startTime) {
 //     bitmexService.downloadBitmex1mData(startTime);
 // });
