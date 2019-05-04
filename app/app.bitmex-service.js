@@ -125,15 +125,17 @@ service.downloadBitmexData = function (binSize, startTime) {
                 //     }
                     dbConn.query(sql, [rows], (error, results, fields) => {
                         if (error) {
-                            console.log(error)
+                            console.log(error);
+                            dbConn = null;
+                        } else {
+                            dbConn.end(function (err) {
+                                // The connection is terminated now
+                            });
                         }
                         console.log('mysql-end');
                         setTimeout(service.downloadBitmexData, 5000, binSize, lastTimestamp);
                         // console.log('setTimeout-1m', '0');
                         console.log('setTimeout', '0', '5s', lastTimestamp);
-                    });
-                    dbConn.end(function(err) {
-                        // The connection is terminated now
                     });
                 // });
 
@@ -414,11 +416,13 @@ service.commitData = function() {
         // console.log(sql);
         dbConn.query(sql, [buffer], (error, results, fields) => {
             if (error) {
-                console.log(error)
+                console.log(error);
+                dbConn = null;
+            } else {
+                dbConn.end(function (err) {
+                    // The connection is terminated now
+                });
             }
-            dbConn.end(function(err) {
-                // The connection is terminated now
-            });
         });
     }
     buffer = []
@@ -458,11 +462,13 @@ service.commitData = function() {
         // console.log(sql);
         dbConn.query(sql, [buffer], (error, results, fields) => {
             if (error) {
-                console.log(error)
+                console.log(error);
+                dbConn = null;
+            } else {
+                dbConn.end(function (err) {
+                    // The connection is terminated now
+                });
             }
-            dbConn.end(function(err) {
-                // The connection is terminated now
-            });
         });
     }
     console.log('buffer-length-end', ordersBuffer.length, hiddenOrdersBuffer.length);
