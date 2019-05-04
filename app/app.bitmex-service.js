@@ -41,6 +41,7 @@ service.downloadBitmexData = function (binSize, startTime) {
             // console.log('downloadBitmexData-end');
             if (error) {
                 console.log(error);
+                console.log(response.statusCode);
             }
             // if (body && body.length > 0 && body.charAt(0) != '<') {
             if (response.statusCode === 200) {
