@@ -42,45 +42,47 @@ service.downloadBitmexData = function (binSize, startTime) {
             if (error) {
                 console.log(error);
             }
-            let items = JSON.parse(body);
-            if (response.statusCode == 200 && items.length > 0) {
-                let sql;
-                let lastTimestamp;
-                let rows = [];
-                for (let item of items) {
-                    rows.push([
-                        item.timestamp,
-                        item.symbol,
-                        item.open,
-                        item.high,
-                        item.low,
-                        item.close,
-                        item.volume,
-                    ]);
-                    lastTimestamp = item.timestamp;
-                }
-                // sql = sprintf("INSERT INTO `bitmex_data_%s`(`timestamp`, `symbol`, `open`, `high`, `low`, `close`, `volume`) VALUES('%s', '%s', %s, %s, %s, %s, %s);", binSize, item.timestamp, item.symbol, item.open, item.high, item.low, item.close, item.volume);
-                // sql = sprintf("CREATE TABLE IF NOT EXISTS `bitmex_data_%s` (  `id` int(11) unsigned NOT NULL AUTO_INCREMENT,  `timestamp` varchar(30) DEFAULT NULL,  `symbol` varchar(10) DEFAULT NULL,  `open` double DEFAULT '0',  `high` double DEFAULT '0',  `low` double DEFAULT '0',  `close` double DEFAULT '0',  `volume` double DEFAULT '0',  PRIMARY KEY (`id`));", binSize);
-                // console.log('insert');
-                // dbConn.query(sql, [rows], (error, results, fields) => {
-                //     if (error) {
-                //         console.log(error)
-                //     }
+            // if (body && body.length > 0 && body.charAt(0) != '<') {
+            if (response.statusCode === 200) {
+                let items = JSON.parse(body);
+                if (items.length > 0) {
+                    let sql;
+                    let lastTimestamp;
+                    let rows = [];
+                    for (let item of items) {
+                        rows.push([
+                            item.timestamp,
+                            item.symbol,
+                            item.open,
+                            item.high,
+                            item.low,
+                            item.close,
+                            item.volume,
+                        ]);
+                        lastTimestamp = item.timestamp;
+                    }
+                    // sql = sprintf("INSERT INTO `bitmex_data_%s`(`timestamp`, `symbol`, `open`, `high`, `low`, `close`, `volume`) VALUES('%s', '%s', %s, %s, %s, %s, %s);", binSize, item.timestamp, item.symbol, item.open, item.high, item.low, item.close, item.volume);
+                    // sql = sprintf("CREATE TABLE IF NOT EXISTS `bitmex_data_%s` (  `id` int(11) unsigned NOT NULL AUTO_INCREMENT,  `timestamp` varchar(30) DEFAULT NULL,  `symbol` varchar(10) DEFAULT NULL,  `open` double DEFAULT '0',  `high` double DEFAULT '0',  `low` double DEFAULT '0',  `close` double DEFAULT '0',  `volume` double DEFAULT '0',  PRIMARY KEY (`id`));", binSize);
+                    // console.log('insert');
+                    // dbConn.query(sql, [rows], (error, results, fields) => {
+                    //     if (error) {
+                    //         console.log(error)
+                    //     }
                     sql = sprintf("INSERT INTO `bitmex_data_%s`(`timestamp`, `symbol`, `open`, `high`, `low`, `close`, `volume`) VALUES ?;", binSize);
 
                     // console.log('mysql-start');
-                // let dbConn;
-                // if (binSize == '1m') {
-                //     dbConn = dbConn1m;
-                // } else if (binSize == '5m') {
-                //     dbConn = dbConn5m;
-                // } else if (binSize == '1h') {
-                //     dbConn = dbConn1h;
-                // }
-                let dbConn = new mysql.createConnection(config.mysql);
-                // dbConn.connect(error => {
-                //     if (!error) {
-                //     }
+                    // let dbConn;
+                    // if (binSize == '1m') {
+                    //     dbConn = dbConn1m;
+                    // } else if (binSize == '5m') {
+                    //     dbConn = dbConn5m;
+                    // } else if (binSize == '1h') {
+                    //     dbConn = dbConn1h;
+                    // }
+                    let dbConn = new mysql.createConnection(config.mysql);
+                    // dbConn.connect(error => {
+                    //     if (!error) {
+                    //     }
                     dbConn.query(sql, [rows], (error, results, fields) => {
                         if (error) {
                             console.log(error);
@@ -96,10 +98,11 @@ service.downloadBitmexData = function (binSize, startTime) {
                         // console.log('setTimeout-1m', '0');
                         console.log('setTimeout', '0', '5s', lastTimestamp);
                     });
-                // });
+                    // });
 
-                // });
-                return;
+                    // });
+                    return;
+                }
             }
             setTimeout(service.downloadBitmexData, 60000, binSize, startTime);
             console.log('1m', startTime);
@@ -334,8 +337,8 @@ service.commitData = function() {
 
 service.calculateFFT = function(binSize, startTime) {
     let dbConn = new mysql.createConnection(config.mysql);
-    // let sql = sprintf("SELECT * FROM (SELECT `id`, `timestamp`, `open`, `high`, `low`, `close` FROM `bitmex_data_%s_view` WHERE `timestamp` <= '%s' ORDER BY `timestamp` DESC LIMIT 500) `tmp` ORDER BY `timestamp`;", binSize, startTime);
-    let sql = sprintf("SELECT * FROM (SELECT `id`, `timestamp`, IFNULL(`open`, 0) `open`, IFNULL(`high`, 0) `high`, IFNULL(`low`, 0) `low`, IFNULL(`close`, 0) `close` FROM `bitmex_data_%s_view` WHERE `timestamp` BETWEEN '2015-09-25T12:05:00.000Z' AND '2019-09-31T23:59:00.100Z' ORDER BY `timestamp` DESC) `tmp` ORDER BY `timestamp`;", binSize);
+    let sql = sprintf("SELECT * FROM (SELECT `id`, `timestamp`, `open`, `high`, `low`, `close` FROM `bitmex_data_%s_view` WHERE `timestamp` <= '%s' ORDER BY `timestamp` DESC LIMIT 500) `tmp` ORDER BY `timestamp`;", binSize, startTime);
+    // let sql = sprintf("SELECT * FROM (SELECT `id`, `timestamp`, IFNULL(`open`, 0) `open`, IFNULL(`high`, 0) `high`, IFNULL(`low`, 0) `low`, IFNULL(`close`, 0) `close` FROM `bitmex_data_%s_view` WHERE `timestamp` BETWEEN '2015-09-25T12:05:00.000Z' AND '2019-09-31T23:59:00.100Z' ORDER BY `timestamp` DESC) `tmp` ORDER BY `timestamp`;", binSize);
     // sql = sprintf("INSERT INTO `hidden_orders` SET ?");
     console.log(sql);
     dbConn.query(sql, null, (error, results, fields) => {
