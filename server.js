@@ -35,9 +35,17 @@ bitmexService.readTrade();
 // setTimeout(bitmexService.commitData, 60000);
 bitmexService.commitData();
 
-bitmexService.getLastTimestamp4Bucket('1h', function (startTime) {
+setTimeout(bitmexService.getLastTimestamp4Bucket, 0, '5m', function (startTime) {
+    bitmexService.downloadBitmexData('5m', startTime);
+});
+
+setTimeout(bitmexService.getLastTimestamp4Bucket, 30000, '1h', function (startTime) {
     bitmexService.downloadBitmexData('1h', startTime);
 });
+//
+// bitmexService.getLastTimestamp4Bucket('1h', function (startTime) {
+//     bitmexService.downloadBitmexData('1h', startTime);
+// });
 
 setTimeout(bitmexService.getLastTimestamp4Bucket, 15000, '1m', function (startTime) {
     bitmexService.downloadBitmexData('1m', startTime);
@@ -45,10 +53,6 @@ setTimeout(bitmexService.getLastTimestamp4Bucket, 15000, '1m', function (startTi
 // bitmexService.getLastTimestamp4Bucket('1m', function (startTime) {
 //     bitmexService.downloadBitmexData('1m', startTime);
 // });
-
-setTimeout(bitmexService.getLastTimestamp4Bucket, 30000, '5m', function (startTime) {
-    bitmexService.downloadBitmexData('5m', startTime);
-});
 // bitmexService.getLastTimestamp4Bucket('5m', function (startTime) {
 //     bitmexService.downloadBitmexData('5m', startTime);
 // });

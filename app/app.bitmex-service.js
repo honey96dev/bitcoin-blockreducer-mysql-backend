@@ -20,49 +20,49 @@ let hiddenOrdersBuffer = [];
 let orderIDs = [];
 let hiddenOrderIDs = [];
 
-const dbConn1m = new mysql.createConnection(config.mysql);
+// const dbConn1m = new mysql.createConnection(config.mysql);
 
-dbConn1m.connect((error) => {
-    if (error) {
-        console.log("!!! Cannot connect !!! Error! ");
-        // throw error;
-    } else {
-        // console.log("Connection established ID is " + dbConn.threadId);
-    }
-});
+// dbConn1m.connect((error) => {
+//     if (error) {
+//         console.log("!!! Cannot connect !!! Error! ");
+//         // throw error;
+//     } else {
+//         // console.log("Connection established ID is " + dbConn.threadId);
+//     }
+// });
 
-const dbConn5m = new mysql.createConnection(config.mysql);
+// const dbConn5m = new mysql.createConnection(config.mysql);
 
-dbConn5m.connect((error) => {
-    if (error) {
-        console.log("!!! Cannot connect !!! Error! ");
-        // throw error;
-    } else {
-        // console.log("Connection established ID is " + dbConn.threadId);
-    }
-});
+// dbConn5m.connect((error) => {
+//     if (error) {
+//         console.log("!!! Cannot connect !!! Error! ");
+//         // throw error;
+//     } else {
+//         // console.log("Connection established ID is " + dbConn.threadId);
+//     }
+// });
 
-const dbConn1h = new mysql.createConnection(config.mysql);
+// const dbConn1h = new mysql.createConnection(config.mysql);
 
-dbConn1h.connect((error) => {
-    if (error) {
-        console.log("!!! Cannot connect !!! Error! ");
-        // throw error;
-    } else {
-        // console.log("Connection established ID is " + dbConn.threadId);
-    }
-});
+// dbConn1h.connect((error) => {
+//     if (error) {
+//         console.log("!!! Cannot connect !!! Error! ");
+//         // throw error;
+//     } else {
+//         // console.log("Connection established ID is " + dbConn.threadId);
+//     }
+// });
 
-const dbConnTrade = new mysql.createConnection(config.mysql);
+// const dbConnTrade = new mysql.createConnection(config.mysql);
 
-dbConnTrade.connect((error) => {
-    if (error) {
-        console.log("!!! Cannot connect !!! Error! ");
-        // throw error;
-    } else {
-        // console.log("Connection established ID is " + dbConn.threadId);
-    }
-});
+// dbConnTrade.connect((error) => {
+//     if (error) {
+//         console.log("!!! Cannot connect !!! Error! ");
+//         // throw error;
+//     } else {
+//         // console.log("Connection established ID is " + dbConn.threadId);
+//     }
+// });
 service.downloadBitmexData = function (binSize, startTime) {
     try {
         if (startTime.length == 0) {
@@ -111,27 +111,31 @@ service.downloadBitmexData = function (binSize, startTime) {
                     sql = sprintf("INSERT INTO `bitmex_data_%s`(`timestamp`, `symbol`, `open`, `high`, `low`, `close`, `volume`) VALUES ?;", binSize);
 
                     // console.log('mysql-start');
-                let dbConn;
-                if (binSize == '1m') {
-                    dbConn = dbConn1m;
-                } else if (binSize == '5m') {
-                    dbConn = dbConn5m;
-                } else if (binSize == '1h') {
-                    dbConn = dbConn1h;
-                }
-                dbConn.connect(error => {
-                    if (!error) {
-                        dbConn.query(sql, [rows], (error, results, fields) => {
-                            if (error) {
-                                console.log(error)
-                            }
-                            console.log('mysql-end');
-                            setTimeout(service.downloadBitmexData, 5000, binSize, lastTimestamp);
-                            // console.log('setTimeout-1m', '0');
-                            console.log('setTimeout', '0', '5s', lastTimestamp);
-                        });
-                    }
-                });
+                // let dbConn;
+                // if (binSize == '1m') {
+                //     dbConn = dbConn1m;
+                // } else if (binSize == '5m') {
+                //     dbConn = dbConn5m;
+                // } else if (binSize == '1h') {
+                //     dbConn = dbConn1h;
+                // }
+                let dbConn = new mysql.createConnection(config.mysql);
+                // dbConn.connect(error => {
+                //     if (!error) {
+                //     }
+                    dbConn.query(sql, [rows], (error, results, fields) => {
+                        if (error) {
+                            console.log(error)
+                        }
+                        console.log('mysql-end');
+                        setTimeout(service.downloadBitmexData, 5000, binSize, lastTimestamp);
+                        // console.log('setTimeout-1m', '0');
+                        console.log('setTimeout', '0', '5s', lastTimestamp);
+                    });
+                    dbConn.end(function(err) {
+                        // The connection is terminated now
+                    });
+                // });
 
                 // });
                 return;
@@ -369,97 +373,99 @@ service.readTrade = function () {
 };
 
 service.commitData = function() {
-    dbConnTrade.connect((error) => {
-        if (error) {
-            console.log("!!! Cannot connect !!! Error! ");
-        } else {
-            let sql;
-            let item;
-            let buffer = [];
-            console.log('buffer-length-start', ordersBuffer.length, hiddenOrdersBuffer.length);
-            while (ordersBuffer.length) {
-                item = ordersBuffer.shift();
-                orderIDs = orderIDs.filter(function(value, index, arr) {
-                    return value == item.trdMatchID;
-                });
-                buffer.push([
-                    item.timestamp,
-                    item.symbol,
-                    item.side,
-                    item.size,
-                    item.price,
-                    item.tickDirection,
-                    item.trdMatchID,
-                    item.grossValue,
-                    item.homeNotional,
-                    item.foreignNotional
-                ]);
-                // sql = sprintf("INSERT INTO `orders`(`timestamp`, `symbol`, `side`, `size`, `price`, `tickDirection`, `trdMatchID`, `grossValue`, `homeNotional`, `foreignNotional`) SELECT * FROM (SELECT '%s' `timestamp`, '%s' `symbol`, '%s' `side`, '%s' `size`, '%s' `price`, '%s' `tickDirection`, '%s' `trdMatchID`, '%s' `grossValue`, '%s' `homeNotional`, '%s' `foreignNotional`) AS `tmp` WHERE NOT EXISTS (SELECT `id` FROM `orders` WHERE `trdMatchID` = '%s') LIMIT 0, 1;",
-                //     item.timestamp, item.symbol, item.side, item.size, item.price, item.tickDirection, item.trdMatchID,
-                //     item.grossValue, item.homeNotional, item.foreignNotional, item.trdMatchID);
-                // sql = sprintf("SELECT COUNT(`id`) `count` FROM `orders` WHERE `trdMatchID` = '%s';", item.trdMatchID);
-                // sql = sprintf("INSERT INTO `orders`(`timestamp`, `symbol`, `side`, `size`, `price`, `tickDirection`, `trdMatchID`, `grossValue`, `homeNotional`, `foreignNotional`) SET ?");
-                // // console.log(sql);
-                // await dbConn.query(sql, [], (error, results, fields) => {
-                //     if (error) {
-                //         console.log(error)
-                //     }
-                // });
-            }
-            if (buffer.length > 0) {
-                sql = sprintf("INSERT INTO `orders`(`timestamp`, `symbol`, `side`, `size`, `price`, `tickDirection`, `trdMatchID`, `grossValue`, `homeNotional`, `foreignNotional`) VALUES ?");
-                // sql = sprintf("INSERT INTO `hidden_orders` SET ?");
-                // console.log(sql);
-                dbConn.query(sql, [buffer], (error, results, fields) => {
-                    if (error) {
-                        console.log(error)
-                    }
-                });
-            }
-            buffer = []
-            while (hiddenOrdersBuffer.length) {
-                item = hiddenOrdersBuffer.shift();
-                hiddenOrderIDs = hiddenOrderIDs.filter(function(value, index, arr) {
-                    return value == item.trdMatchID;
-                });
-                buffer.push([
-                    item.timestamp,
-                    item.symbol,
-                    item.side,
-                    item.size,
-                    item.price,
-                    item.tickDirection,
-                    item.trdMatchID,
-                    item.grossValue,
-                    item.homeNotional,
-                    item.foreignNotional
-                ]);
-                // sql = sprintf("INSERT INTO `hidden_orders`(`timestamp`, `symbol`, `side`, `size`, `price`, `tickDirection`, `trdMatchID`, " +
-                //     "`grossValue`, `homeNotional`, `foreignNotional`) " +
-                //     "SELECT * FROM (SELECT '%s' `timestamp`, '%s' `symbol`, '%s' `side`, '%s' `size`, '%s' `price`, '%s' `tickDirection`, '%s' `trdMatchID`, '%s' `grossValue`, '%s' `homeNotional`, '%s' `foreignNotional`) AS `tmp` WHERE NOT EXISTS (SELECT `id` FROM `hidden_orders` WHERE `trdMatchID` = '%s') LIMIT 0, 1;",
-                //     item.timestamp, item.symbol, item.side, item.size, item.price, item.tickDirection, item.trdMatchID,
-                //     item.grossValue, item.homeNotional, item.foreignNotional, item.trdMatchID);
-                // // console.log(sql);
-                // await dbConn.query(sql, null, (error, results, fields) => {
-                //     if (error) {
-                //         console.log(error)
-                //     }
-                // });
-            }
-            if (buffer.length > 0) {
-                sql = sprintf("INSERT INTO `hidden_orders`(`timestamp`, `symbol`, `side`, `size`, `price`, `tickDirection`, `trdMatchID`, `grossValue`, `homeNotional`, `foreignNotional`) VALUES ?");
-                // sql = sprintf("INSERT INTO `hidden_orders` SET ?");
-                // console.log(sql);
-                dbConn.query(sql, [buffer], (error, results, fields) => {
-                    if (error) {
-                        console.log(error)
-                    }
-                });
-            }
-            console.log('buffer-length-end', ordersBuffer.length, hiddenOrdersBuffer.length);
-        }
-    });
+    let sql;
+    let item;
+    let buffer = [];
+    console.log('buffer-length-start', ordersBuffer.length, hiddenOrdersBuffer.length);
+    while (ordersBuffer.length) {
+        item = ordersBuffer.shift();
+        orderIDs = orderIDs.filter(function(value, index, arr) {
+            return value == item.trdMatchID;
+        });
+        buffer.push([
+            item.timestamp,
+            item.symbol,
+            item.side,
+            item.size,
+            item.price,
+            item.tickDirection,
+            item.trdMatchID,
+            item.grossValue,
+            item.homeNotional,
+            item.foreignNotional
+        ]);
+        // sql = sprintf("INSERT INTO `orders`(`timestamp`, `symbol`, `side`, `size`, `price`, `tickDirection`, `trdMatchID`, `grossValue`, `homeNotional`, `foreignNotional`) SELECT * FROM (SELECT '%s' `timestamp`, '%s' `symbol`, '%s' `side`, '%s' `size`, '%s' `price`, '%s' `tickDirection`, '%s' `trdMatchID`, '%s' `grossValue`, '%s' `homeNotional`, '%s' `foreignNotional`) AS `tmp` WHERE NOT EXISTS (SELECT `id` FROM `orders` WHERE `trdMatchID` = '%s') LIMIT 0, 1;",
+        //     item.timestamp, item.symbol, item.side, item.size, item.price, item.tickDirection, item.trdMatchID,
+        //     item.grossValue, item.homeNotional, item.foreignNotional, item.trdMatchID);
+        // sql = sprintf("SELECT COUNT(`id`) `count` FROM `orders` WHERE `trdMatchID` = '%s';", item.trdMatchID);
+        // sql = sprintf("INSERT INTO `orders`(`timestamp`, `symbol`, `side`, `size`, `price`, `tickDirection`, `trdMatchID`, `grossValue`, `homeNotional`, `foreignNotional`) SET ?");
+        // // console.log(sql);
+        // await dbConn.query(sql, [], (error, results, fields) => {
+        //     if (error) {
+        //         console.log(error)
+        //     }
+        // });
+    }
+    if (buffer.length > 0) {
 
+        let dbConn = new mysql.createConnection(config.mysql);
+        sql = sprintf("INSERT INTO `orders`(`timestamp`, `symbol`, `side`, `size`, `price`, `tickDirection`, `trdMatchID`, `grossValue`, `homeNotional`, `foreignNotional`) VALUES ?");
+        // sql = sprintf("INSERT INTO `hidden_orders` SET ?");
+        // console.log(sql);
+        dbConn.query(sql, [buffer], (error, results, fields) => {
+            if (error) {
+                console.log(error)
+            }
+            dbConn.end(function(err) {
+                // The connection is terminated now
+            });
+        });
+    }
+    buffer = []
+    while (hiddenOrdersBuffer.length) {
+        item = hiddenOrdersBuffer.shift();
+        hiddenOrderIDs = hiddenOrderIDs.filter(function(value, index, arr) {
+            return value == item.trdMatchID;
+        });
+        buffer.push([
+            item.timestamp,
+            item.symbol,
+            item.side,
+            item.size,
+            item.price,
+            item.tickDirection,
+            item.trdMatchID,
+            item.grossValue,
+            item.homeNotional,
+            item.foreignNotional
+        ]);
+        // sql = sprintf("INSERT INTO `hidden_orders`(`timestamp`, `symbol`, `side`, `size`, `price`, `tickDirection`, `trdMatchID`, " +
+        //     "`grossValue`, `homeNotional`, `foreignNotional`) " +
+        //     "SELECT * FROM (SELECT '%s' `timestamp`, '%s' `symbol`, '%s' `side`, '%s' `size`, '%s' `price`, '%s' `tickDirection`, '%s' `trdMatchID`, '%s' `grossValue`, '%s' `homeNotional`, '%s' `foreignNotional`) AS `tmp` WHERE NOT EXISTS (SELECT `id` FROM `hidden_orders` WHERE `trdMatchID` = '%s') LIMIT 0, 1;",
+        //     item.timestamp, item.symbol, item.side, item.size, item.price, item.tickDirection, item.trdMatchID,
+        //     item.grossValue, item.homeNotional, item.foreignNotional, item.trdMatchID);
+        // // console.log(sql);
+        // await dbConn.query(sql, null, (error, results, fields) => {
+        //     if (error) {
+        //         console.log(error)
+        //     }
+        // });
+    }
+    if (buffer.length > 0) {
+        let dbConn = new mysql.createConnection(config.mysql);
+        sql = sprintf("INSERT INTO `hidden_orders`(`timestamp`, `symbol`, `side`, `size`, `price`, `tickDirection`, `trdMatchID`, `grossValue`, `homeNotional`, `foreignNotional`) VALUES ?");
+        // sql = sprintf("INSERT INTO `hidden_orders` SET ?");
+        // console.log(sql);
+        dbConn.query(sql, [buffer], (error, results, fields) => {
+            if (error) {
+                console.log(error)
+            }
+            dbConn.end(function(err) {
+                // The connection is terminated now
+            });
+        });
+    }
+    console.log('buffer-length-end', ordersBuffer.length, hiddenOrdersBuffer.length);
     setTimeout(service.commitData, 60000);
 };
 
