@@ -32,6 +32,7 @@ app.use(express.static( './public' ));
 
 bitmexService.readOrderBook();
 bitmexService.readTrade();
+// setTimeout(bitmexService.commitData, 60000);
 bitmexService.commitData();
 
 bitmexService.getLastTimestamp4Bucket('1h', function (startTime) {
