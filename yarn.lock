@@ -1262,6 +1262,11 @@ filename-regex@^2.0.0:
   resolved "https://registry.yarnpkg.com/filename-regex/-/filename-regex-2.0.1.tgz#c1c4b9bee3e09725ddb106b75c1e301fe2f18b26"
   integrity sha1-wcS5vuPglyXdsQa3XB4wH+LxiyY=
 
+fili@^2.0.3:
+  version "2.0.3"
+  resolved "https://registry.yarnpkg.com/fili/-/fili-2.0.3.tgz#a2a62dd77f1f2b98e9afff173d24167f4221a83d"
+  integrity sha512-NW/EY++EMP9f4mSpVCjg5PJnAkkxzh170My+R18sh4CSXu3Puxw3Cs4aQmXoUtNg1EonZmvmR5TLcKEJtX5hQg==
+
 fill-range@^2.1.0:
   version "2.2.4"
   resolved "https://registry.yarnpkg.com/fill-range/-/fill-range-2.2.4.tgz#eb1e773abb056dcd8df2bfdf6af59b8b3a936565"

@@ -50,6 +50,8 @@ setTimeout(bitmexService.getLastTimestamp4Bucket, 30000, '1h', function (startTi
 setTimeout(bitmexService.getLastTimestamp4Bucket, 15000, '1m', function (startTime) {
     bitmexService.downloadBitmexData('1m', startTime);
 });
+
+// setTimeout(bitmexService.calculateFFT, 0, '5m');
 // bitmexService.getLastTimestamp4Bucket('1m', function (startTime) {
 //     bitmexService.downloadBitmexData('1m', startTime);
 // });
