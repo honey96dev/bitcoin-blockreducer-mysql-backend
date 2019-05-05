@@ -224,7 +224,7 @@ service.commitData = function() {
         ]);
         if (buffer.length > 512) {
             let dbConn = new mysql.createConnection(config.mysql);
-            sql = sprintf("INSERT INTO `orders`(`timestamp`, `symbol`, `side`, `size`, `price`, `tickDirection`, `trdMatchID`, `grossValue`, `homeNotional`, `foreignNotional`) VALUES ?");
+            sql = sprintf("INSERT INTO `orders`(`timestamp`, `symbol`, `side`, `size`, `price`, `tickDirection`, `trdMatchID`, `grossValue`, `homeNotional`, `foreignNotional`) VALUES ? ON DUPLICATE KEY UPDATE `timestamp` = VALUES(`timestamp`), `symbol` = VALUES(`symbol`), `side` = VALUES(`side`), `size` = VALUES(`size`), `price` = VALUES(`price`), `tickDirection` = VALUES(`tickDirection`), `trdMatchID` = VALUES(`trdMatchID`), `grossValue` = VALUES(`grossValue`), `homeNotional` = VALUES(`homeNotional`), `foreignNotional` = VALUES(`foreignNotional`);");
             // sql = sprintf("INSERT INTO `hidden_orders` SET ?");
             // console.log(sql);
             dbConn.query(sql, [buffer], (error, results, fields) => {
@@ -254,7 +254,7 @@ service.commitData = function() {
     if (buffer.length > 0) {
 
         let dbConn = new mysql.createConnection(config.mysql);
-        sql = sprintf("INSERT INTO `orders`(`timestamp`, `symbol`, `side`, `size`, `price`, `tickDirection`, `trdMatchID`, `grossValue`, `homeNotional`, `foreignNotional`) VALUES ?");
+        sql = sprintf("INSERT INTO `orders`(`timestamp`, `symbol`, `side`, `size`, `price`, `tickDirection`, `trdMatchID`, `grossValue`, `homeNotional`, `foreignNotional`) VALUES ? ON DUPLICATE KEY UPDATE `timestamp` = VALUES(`timestamp`), `symbol` = VALUES(`symbol`), `side` = VALUES(`side`), `size` = VALUES(`size`), `price` = VALUES(`price`), `tickDirection` = VALUES(`tickDirection`), `trdMatchID` = VALUES(`trdMatchID`), `grossValue` = VALUES(`grossValue`), `homeNotional` = VALUES(`homeNotional`), `foreignNotional` = VALUES(`foreignNotional`);");
         // sql = sprintf("INSERT INTO `hidden_orders` SET ?");
         // console.log(sql);
         dbConn.query(sql, [buffer], (error, results, fields) => {
@@ -289,7 +289,7 @@ service.commitData = function() {
         ]);
         if (buffer.length > 512) {
             let dbConn = new mysql.createConnection(config.mysql);
-            sql = sprintf("INSERT INTO `hidden_orders`(`timestamp`, `symbol`, `side`, `size`, `price`, `tickDirection`, `trdMatchID`, `grossValue`, `homeNotional`, `foreignNotional`) VALUES ?");
+            sql = sprintf("INSERT INTO `hidden_orders`(`timestamp`, `symbol`, `side`, `size`, `price`, `tickDirection`, `trdMatchID`, `grossValue`, `homeNotional`, `foreignNotional`) VALUES ? ON DUPLICATE KEY UPDATE `timestamp` = VALUES(`timestamp`), `symbol` = VALUES(`symbol`), `side` = VALUES(`side`), `size` = VALUES(`size`), `price` = VALUES(`price`), `tickDirection` = VALUES(`tickDirection`), `trdMatchID` = VALUES(`trdMatchID`), `grossValue` = VALUES(`grossValue`), `homeNotional` = VALUES(`homeNotional`), `foreignNotional` = VALUES(`foreignNotional`);");
             // sql = sprintf("INSERT INTO `hidden_orders` SET ?");
             // console.log(sql);
             dbConn.query(sql, [buffer], (error, results, fields) => {
@@ -318,10 +318,10 @@ service.commitData = function() {
     }
     if (buffer.length > 0) {
         let dbConn = new mysql.createConnection(config.mysql);
-        sql = sprintf("INSERT INTO `hidden_orders`(`timestamp`, `symbol`, `side`, `size`, `price`, `tickDirection`, `trdMatchID`, `grossValue`, `homeNotional`, `foreignNotional`) VALUES ?");
+        sql = sprintf("INSERT INTO `hidden_orders`(`timestamp`, `symbol`, `side`, `size`, `price`, `tickDirection`, `trdMatchID`, `grossValue`, `homeNotional`, `foreignNotional`) VALUES ? ON DUPLICATE KEY UPDATE `timestamp` = VALUES(`timestamp`), `symbol` = VALUES(`symbol`), `side` = VALUES(`side`), `size` = VALUES(`size`), `price` = VALUES(`price`), `tickDirection` = VALUES(`tickDirection`), `trdMatchID` = VALUES(`trdMatchID`), `grossValue` = VALUES(`grossValue`), `homeNotional` = VALUES(`homeNotional`), `foreignNotional` = VALUES(`foreignNotional`);");
         // sql = sprintf("INSERT INTO `hidden_orders` SET ?");
         // console.log(sql);
-        dbConn.query(sql, [buffer], (error, results, fields) => {
+        let query = dbConn.query(sql, [buffer], (error, results, fields) => {
             if (error) {
                 console.log(error);
                 dbConn = null;
@@ -331,6 +331,7 @@ service.commitData = function() {
                 });
             }
         });
+        // console.log(query.sql);
     }
     console.log('buffer-length-end', ordersBuffer.length, hiddenOrdersBuffer.length);
     setTimeout(service.commitData, 60000);
