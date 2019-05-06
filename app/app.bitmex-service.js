@@ -69,7 +69,7 @@ service.downloadBitmexData = function (binSize, startTime) {
                     //     if (error) {
                     //         console.log(error)
                     //     }
-                    sql = sprintf("INSERT INTO `bitmex_data_%s`(`timestamp`, `symbol`, `open`, `high`, `low`, `close`, `volume`) VALUES ?;", binSize);
+                    sql = sprintf("INSERT INTO `bitmex_data_%s`(`timestamp`, `symbol`, `open`, `high`, `low`, `close`, `volume`) VALUES ? ON DUPLICATE KEY UPDATE `timestamp` = VALUES(`timestamp`), `symbol` = VALUES(`symbol`), `open` = VALUES(`open`), `high` = VALUES(`high`), `low` = VALUES(`low`), `close` = VALUES(`close`), `volume` = VALUES(`volume`);", binSize);
 
                     // console.log('mysql-start');
                     // let dbConn;
@@ -339,7 +339,7 @@ service.commitData = function() {
 
 service.calculateFFT = function(binSize, startTime) {
     let dbConn = new mysql.createConnection(config.mysql);
-    let sql = sprintf("SELECT * FROM (SELECT `id`, `timestamp`, `open`, `high`, `low`, `close` FROM `bitmex_data_%s_view` WHERE `timestamp` <= '%s' ORDER BY `timestamp` DESC LIMIT 500) `tmp` ORDER BY `timestamp`;", binSize, startTime);
+    let sql = sprintf("SELECT * FROM (SELECT `timestamp`, `open`, `high`, `low`, `close` FROM `bitmex_data_%s_view` WHERE `timestamp` <= '%s' ORDER BY `timestamp` DESC LIMIT 500) `tmp` ORDER BY `timestamp`;", binSize, startTime);
     // let sql = sprintf("SELECT * FROM (SELECT `id`, `timestamp`, IFNULL(`open`, 0) `open`, IFNULL(`high`, 0) `high`, IFNULL(`low`, 0) `low`, IFNULL(`close`, 0) `close` FROM `bitmex_data_%s_view` WHERE `timestamp` BETWEEN '2015-09-25T12:05:00.000Z' AND '2019-09-31T23:59:00.100Z' ORDER BY `timestamp` DESC) `tmp` ORDER BY `timestamp`;", binSize);
     // sql = sprintf("INSERT INTO `hidden_orders` SET ?");
     // console.log(sql);
@@ -349,7 +349,7 @@ service.calculateFFT = function(binSize, startTime) {
             dbConn = null;
         } else {
             let calced = [];
-            let ids = [];
+            // let ids = [];
             let timestamps = [];
             let open = [];
             let high = [];
@@ -362,7 +362,7 @@ service.calculateFFT = function(binSize, startTime) {
             if (results != null && results.length > 0) {
                 for (let i = 0; i < 100; i++) {
                     // calced.push(results[0]);
-                    ids.push(results[0].id);
+                    // ids.push(results[0].id);
                     timestamps.push(results[0].timestamp);
                     open.push(results[0].open);
                     high.push(results[0].high);
@@ -377,7 +377,7 @@ service.calculateFFT = function(binSize, startTime) {
                 // calced = calced.concat(results);
                 for (let item of results) {
                     // calced.push(item);
-                    ids.push(item.id);
+                    // ids.push(item.id);
                     timestamps.push(item.timestamp);
                     open.push(item.open);
                     high.push(item.high);
@@ -392,7 +392,7 @@ service.calculateFFT = function(binSize, startTime) {
                 const resultLast = results.length - 1;
                 for (let i = 0; i < 100; i++) {
                     // calced.push(results[resultLast]);
-                    ids.push(results[resultLast].id);
+                    // ids.push(results[resultLast].id);
                     timestamps.push(results[resultLast].timestamp);
                     open.push(results[resultLast].open);
                     high.push(results[resultLast].high);
@@ -436,7 +436,7 @@ service.calculateFFT = function(binSize, startTime) {
                 var iirHighpassFilter = new Fili.IirFilter(highpassFilterCoeffs);
                 highPass = iirHighpassFilter.multiStep(maxChange);
             }
-            if (ids.length == 0) {
+            if (timestamps.length == 0) {
                 return;
             }
             for (let i = 100; i < ids.length - 100; i++) {
@@ -449,13 +449,13 @@ service.calculateFFT = function(binSize, startTime) {
                 // highPass.shift();
                 // highPass.pop();
                 calced.push([
-                    ids[i],
+                    timestamps[i],
                     lowPass[i],
                     highPass[i]
                 ])
             }
             // console.log(lowPass);
-            let sql = sprintf("INSERT INTO `bitmex_data_%s`(`id`, `lowPass`, `highPass`) VALUES ? ON DUPLICATE KEY UPDATE `lowPass` = VALUES(`lowPass`), `highPass` = VALUES(`highPass`);", binSize);
+            let sql = sprintf("INSERT INTO `bitmex_data_%s`(`timestamp`, `lowPass`, `highPass`) VALUES ? ON DUPLICATE KEY UPDATE `lowPass` = VALUES(`lowPass`), `highPass` = VALUES(`highPass`);", binSize);
             let buffer = [];
             for (let item of calced) {
                 buffer.push(item);
