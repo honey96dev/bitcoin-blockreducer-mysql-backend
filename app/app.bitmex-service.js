@@ -439,7 +439,7 @@ service.calculateFFT = function(binSize, startTime) {
             if (timestamps.length == 0) {
                 return;
             }
-            for (let i = 100; i < ids.length - 100; i++) {
+            for (let i = 100; i < timestamps.length - 100; i++) {
                 // calced.shift();
                 // calced.pop();
                 // ids.shift();
