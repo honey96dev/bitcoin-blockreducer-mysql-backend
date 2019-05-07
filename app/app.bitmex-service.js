@@ -330,11 +330,11 @@ service.commitData = function() {
                     // The connection is terminated now
                 });
             }
+            setTimeout(service.commitData, 60000);
         });
         // console.log(query.sql);
     }
     console.log('buffer-length-end', ordersBuffer.length, hiddenOrdersBuffer.length);
-    setTimeout(service.commitData, 60000);
 };
 
 service.calculateFFT = function(binSize, startTime) {
