@@ -82,20 +82,19 @@ service.downloadBitmexData = function (binSize, startTime) {
                     // } else if (binSize == '1h') {
                     //     dbConn = dbConn1h;
                     // }
-                    let dbConn = new mysql.createConnection(config.mysql);
+                    // let dbConn = new mysql.createConnection(config.mysql);
                     // dbConn.connect(error => {
                     //     if (!error) {
                     //     }
                     dbConn.query(sql, [rows], (error, results, fields) => {
                         if (error) {
                             console.log(error);
-                            dbConn = null;
                         } else {
-                            dbConn.end(function (err) {
-                                // The connection is terminated now
-                            });
                             service.calculateFFT(binSize, lastTimestamp);
                         }
+                        // dbConn.end(function (err) {
+                        //     // The connection is terminated now
+                        // });
                         console.log('mysql-end');
                         if (downloadBitmexTimeoutId.get(binSize) != null) {
                             clearTimeout(downloadBitmexTimeoutId.get(binSize));
@@ -237,7 +236,7 @@ service.commitData = function() {
             item.foreignNotional
         ]);
         if (buffer.length > 512) {
-            let dbConn = new mysql.createConnection(config.mysql);
+            // let dbConn = new mysql.createConnection(config.mysql);
             sql = sprintf("INSERT INTO `orders`(`timestamp`, `symbol`, `side`, `size`, `price`, `tickDirection`, `trdMatchID`, `grossValue`, `homeNotional`, `foreignNotional`) VALUES ? ON DUPLICATE KEY UPDATE `timestamp` = VALUES(`timestamp`), `symbol` = VALUES(`symbol`), `side` = VALUES(`side`), `size` = VALUES(`size`), `price` = VALUES(`price`), `tickDirection` = VALUES(`tickDirection`), `trdMatchID` = VALUES(`trdMatchID`), `grossValue` = VALUES(`grossValue`), `homeNotional` = VALUES(`homeNotional`), `foreignNotional` = VALUES(`foreignNotional`);");
             // sql = sprintf("INSERT INTO `hidden_orders` SET ?");
             // console.log(sql);
@@ -248,9 +247,9 @@ service.commitData = function() {
                     // dbConn = null;
                 } else {
                 }
-                dbConn.end(function (err) {
-                    // The connection is terminated now
-                });
+                // dbConn.end(function (err) {
+                //     // The connection is terminated now
+                // });
             });
             buffer = [];
             // commitFlag = true;
@@ -271,7 +270,7 @@ service.commitData = function() {
     // orderIDs = [];
     if (buffer.length > 0) {
 
-        let dbConn = new mysql.createConnection(config.mysql);
+        // let dbConn = new mysql.createConnection(config.mysql);
         sql = sprintf("INSERT INTO `orders`(`timestamp`, `symbol`, `side`, `size`, `price`, `tickDirection`, `trdMatchID`, `grossValue`, `homeNotional`, `foreignNotional`) VALUES ? ON DUPLICATE KEY UPDATE `timestamp` = VALUES(`timestamp`), `symbol` = VALUES(`symbol`), `side` = VALUES(`side`), `size` = VALUES(`size`), `price` = VALUES(`price`), `tickDirection` = VALUES(`tickDirection`), `trdMatchID` = VALUES(`trdMatchID`), `grossValue` = VALUES(`grossValue`), `homeNotional` = VALUES(`homeNotional`), `foreignNotional` = VALUES(`foreignNotional`);");
         // sql = sprintf("INSERT INTO `hidden_orders` SET ?");
         // console.log(sql);
@@ -282,9 +281,9 @@ service.commitData = function() {
                 // dbConn = null;
             } else {
             }
-            dbConn.end(function (err) {
-                // The connection is terminated now
-            });
+            // dbConn.end(function (err) {
+            //     // The connection is terminated now
+            // });
         });
         // commitFlag = true;
     }
@@ -308,7 +307,7 @@ service.commitData = function() {
             item.foreignNotional
         ]);
         if (buffer.length > 512) {
-            let dbConn = new mysql.createConnection(config.mysql);
+            // let dbConn = new mysql.createConnection(config.mysql);
             sql = sprintf("INSERT INTO `hidden_orders`(`timestamp`, `symbol`, `side`, `size`, `price`, `tickDirection`, `trdMatchID`, `grossValue`, `homeNotional`, `foreignNotional`) VALUES ? ON DUPLICATE KEY UPDATE `timestamp` = VALUES(`timestamp`), `symbol` = VALUES(`symbol`), `side` = VALUES(`side`), `size` = VALUES(`size`), `price` = VALUES(`price`), `tickDirection` = VALUES(`tickDirection`), `trdMatchID` = VALUES(`trdMatchID`), `grossValue` = VALUES(`grossValue`), `homeNotional` = VALUES(`homeNotional`), `foreignNotional` = VALUES(`foreignNotional`);");
             // sql = sprintf("INSERT INTO `hidden_orders` SET ?");
             // console.log(sql);
@@ -319,9 +318,9 @@ service.commitData = function() {
                     // dbConn = null;
                 } else {
                 }
-                dbConn.end(function (err) {
-                    // The connection is terminated now
-                });
+                // dbConn.end(function (err) {
+                //     // The connection is terminated now
+                // });
             });
             buffer = [];
 
@@ -343,7 +342,7 @@ service.commitData = function() {
     // hiddenOrderIDs = [];
 
     if (buffer.length > 0) {
-        let dbConn = new mysql.createConnection(config.mysql);
+        // let dbConn = new mysql.createConnection(config.mysql);
         sql = sprintf("INSERT INTO `hidden_orders`(`timestamp`, `symbol`, `side`, `size`, `price`, `tickDirection`, `trdMatchID`, `grossValue`, `homeNotional`, `foreignNotional`) VALUES ? ON DUPLICATE KEY UPDATE `timestamp` = VALUES(`timestamp`), `symbol` = VALUES(`symbol`), `side` = VALUES(`side`), `size` = VALUES(`size`), `price` = VALUES(`price`), `tickDirection` = VALUES(`tickDirection`), `trdMatchID` = VALUES(`trdMatchID`), `grossValue` = VALUES(`grossValue`), `homeNotional` = VALUES(`homeNotional`), `foreignNotional` = VALUES(`foreignNotional`);");
         // sql = sprintf("INSERT INTO `hidden_orders` SET ?");
         // console.log(sql);
@@ -354,9 +353,9 @@ service.commitData = function() {
                 // dbConn = null;
             } else {
             }
-            dbConn.end(function (err) {
-                // The connection is terminated now
-            });
+            // dbConn.end(function (err) {
+            //     // The connection is terminated now
+            // });
 
             // if (commitTimeoutId != null) {
             //     clearTimeout(commitTimeoutId);
@@ -376,7 +375,7 @@ service.commitData = function() {
 };
 
 service.calculateFFT = function(binSize, startTime) {
-    let dbConn = new mysql.createConnection(config.mysql);
+    // let dbConn = new mysql.createConnection(config.mysql);
     let sql = sprintf("SELECT * FROM (SELECT `timestamp`, `open`, `high`, `low`, `close` FROM `bitmex_data_%s_view` WHERE `timestamp` <= '%s' ORDER BY `timestamp` DESC LIMIT 500) `tmp` ORDER BY `timestamp`;", binSize, startTime);
     // let sql = sprintf("SELECT * FROM (SELECT `id`, `timestamp`, IFNULL(`open`, 0) `open`, IFNULL(`high`, 0) `high`, IFNULL(`low`, 0) `low`, IFNULL(`close`, 0) `close` FROM `bitmex_data_%s_view` WHERE `timestamp` BETWEEN '2015-09-25T12:05:00.000Z' AND '2019-09-31T23:59:00.100Z' ORDER BY `timestamp` DESC) `tmp` ORDER BY `timestamp`;", binSize);
     // sql = sprintf("INSERT INTO `hidden_orders` SET ?");
@@ -384,7 +383,7 @@ service.calculateFFT = function(binSize, startTime) {
     dbConn.query(sql, null, (error, results, fields) => {
         if (error) {
             console.log(error);
-            dbConn = null;
+            // dbConn = null;
         } else {
             let calced = [];
             // let ids = [];
@@ -498,8 +497,8 @@ service.calculateFFT = function(binSize, startTime) {
             for (let item of calced) {
                 buffer.push(item);
                 if (buffer.length > 512) {
-                    let dbConn1 = new mysql.createConnection(config.mysql);
-                    let query = dbConn1.query(sql, [buffer], (error, results, fields) => {
+                    // let dbConn1 = new mysql.createConnection(config.mysql);
+                    let query = dbConn.query(sql, [buffer], (error, results, fields) => {
                         if (error) {
                             console.log(error);
                             // dbConn = null;
@@ -508,23 +507,25 @@ service.calculateFFT = function(binSize, startTime) {
 
                     });
                     buffer = [];
-                    dbConn1.end(function (err) {
-                        // The connection is terminated now
-                    });
+                    // dbConn1.end(function (err) {
+                    //     // The connection is terminated now
+                    // });
                 }
             }
-            let dbConn1 = new mysql.createConnection(config.mysql);
-            let query = dbConn1.query(sql, [buffer], (error, results, fields) => {
-                if (error) {
-                    console.log(error);
-                    // dbConn = null;
-                } else {
+            if (buffer.length > 0) {
+                // let dbConn1 = new mysql.createConnection(config.mysql);
+                let query = dbConn.query(sql, [buffer], (error, results, fields) => {
+                    if (error) {
+                        console.log(error);
+                        // dbConn = null;
+                    } else {
 
-                }
-                dbConn1.end(function (err) {
-                    // The connection is terminated now
+                    }
+                    // dbConn1.end(function (err) {
+                    //     // The connection is terminated now
+                    // });
                 });
-            });
+            }
             // console.log('sql', query.sql);
         }
     });
