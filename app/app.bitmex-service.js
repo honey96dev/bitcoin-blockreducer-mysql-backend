@@ -16,6 +16,8 @@ let service = {};
 // let bitmex5mTimeoutId = null;
 // let request1m = false;
 // let request5m = false;
+let downloadBitmexTimeoutId = new Map();
+let commitTimeoutId = null;
 let ordersBuffer = [];
 let hiddenOrdersBuffer = [];
 let orderIDs = [];
@@ -95,7 +97,10 @@ service.downloadBitmexData = function (binSize, startTime) {
                             service.calculateFFT(binSize, lastTimestamp);
                         }
                         console.log('mysql-end');
-                        setTimeout(service.downloadBitmexData, 5000, binSize, lastTimestamp);
+                        if (downloadBitmexTimeoutId.get(binSize) != null) {
+                            clearTimeout(downloadBitmexTimeoutId.get(binSize));
+                        }
+                        downloadBitmexTimeoutId.set(binSize, setTimeout(service.downloadBitmexData, 5000, binSize, lastTimestamp));
                         // console.log('setTimeout-1m', '0');
                         console.log('setTimeout', '0', '5s', lastTimestamp);
                     });
@@ -105,11 +110,19 @@ service.downloadBitmexData = function (binSize, startTime) {
                     return;
                 }
             }
-            setTimeout(service.downloadBitmexData, 60000, binSize, startTime);
+
+            if (downloadBitmexTimeoutId.get(binSize) != null) {
+                clearTimeout(downloadBitmexTimeoutId.get(binSize));
+            }
+            downloadBitmexTimeoutId.set(binSize, setTimeout(service.downloadBitmexData, 60000, binSize, startTime));
             console.log('1m', startTime);
         });
     } catch (e) {
-        setTimeout(service.downloadBitmexData, 60000, binSize, startTime);
+
+        if (downloadBitmexTimeoutId.get(binSize) != null) {
+            clearTimeout(downloadBitmexTimeoutId.get(binSize));
+        }
+        downloadBitmexTimeoutId.set(binSize, setTimeout(service.downloadBitmexData, 60000, binSize, startTime));
         console.log('1m-exception', startTime);
     }
 };
@@ -178,7 +191,7 @@ service.readTrade = function () {
             for (let item of trades['Sell']) {
                 if (item.price > highestBuy && item.price <= lowestSell) {
                     // hiddenOrders.push(item);
-                    if (hiddenOrdersBuffer.indexOf(item.trdMatchID) === -1) {
+                    if (hiddenOrderIDs.indexOf(item.trdMatchID) === -1) {
                         hiddenOrderIDs.push(item.trdMatchID);
                         hiddenOrdersBuffer.push(item);
                     }
@@ -201,6 +214,7 @@ service.readTrade = function () {
 };
 
 service.commitData = function() {
+    let commitFlag = false;
     let sql;
     let item;
     let buffer = [];
@@ -229,7 +243,8 @@ service.commitData = function() {
             // console.log(sql);
             dbConn.query(sql, [buffer], (error, results, fields) => {
                 if (error) {
-                    console.log(error);
+                    // console.log(error);
+                    console.log('commitData', 'order');
                     dbConn = null;
                 } else {
                     dbConn.end(function (err) {
@@ -238,6 +253,7 @@ service.commitData = function() {
                 }
             });
             buffer = [];
+            commitFlag = true;
         }
         // sql = sprintf("INSERT INTO `orders`(`timestamp`, `symbol`, `side`, `size`, `price`, `tickDirection`, `trdMatchID`, `grossValue`, `homeNotional`, `foreignNotional`) SELECT * FROM (SELECT '%s' `timestamp`, '%s' `symbol`, '%s' `side`, '%s' `size`, '%s' `price`, '%s' `tickDirection`, '%s' `trdMatchID`, '%s' `grossValue`, '%s' `homeNotional`, '%s' `foreignNotional`) AS `tmp` WHERE NOT EXISTS (SELECT `id` FROM `orders` WHERE `trdMatchID` = '%s') LIMIT 0, 1;",
         //     item.timestamp, item.symbol, item.side, item.size, item.price, item.tickDirection, item.trdMatchID,
@@ -259,7 +275,8 @@ service.commitData = function() {
         // console.log(sql);
         dbConn.query(sql, [buffer], (error, results, fields) => {
             if (error) {
-                console.log(error);
+                // console.log(error);
+                console.log('commitData', 'order');
                 dbConn = null;
             } else {
                 dbConn.end(function (err) {
@@ -267,6 +284,7 @@ service.commitData = function() {
                 });
             }
         });
+        commitFlag = true;
     }
 
     buffer = [];
@@ -294,7 +312,8 @@ service.commitData = function() {
             // console.log(sql);
             dbConn.query(sql, [buffer], (error, results, fields) => {
                 if (error) {
-                    console.log(error);
+                    // console.log(error);
+                    console.log('commitData', 'hiddenOrder');
                     dbConn = null;
                 } else {
                     dbConn.end(function (err) {
@@ -303,6 +322,7 @@ service.commitData = function() {
                 }
             });
             buffer = [];
+            commitFlag = true;
         }
         // sql = sprintf("INSERT INTO `hidden_orders`(`timestamp`, `symbol`, `side`, `size`, `price`, `tickDirection`, `trdMatchID`, " +
         //     "`grossValue`, `homeNotional`, `foreignNotional`) " +
@@ -323,7 +343,8 @@ service.commitData = function() {
         // console.log(sql);
         let query = dbConn.query(sql, [buffer], (error, results, fields) => {
             if (error) {
-                console.log(error);
+                // console.log(error);
+                console.log('commitData', 'hiddenOrder');
                 dbConn = null;
             } else {
                 dbConn.end(function (err) {
@@ -332,7 +353,14 @@ service.commitData = function() {
             }
             setTimeout(service.commitData, 60000);
         });
+        commitFlag = true;
         // console.log(query.sql);
+    }
+    if (!commitFlag) {
+        if (commitTimeoutId != null) {
+            clearTimeout(downloadBitmexTimeoutId.get(binSize));
+        }
+        commitTimeoutId = setTimeout(service.commitData, 60000);
     }
     console.log('buffer-length-end', ordersBuffer.length, hiddenOrdersBuffer.length);
 };
@@ -460,25 +488,32 @@ service.calculateFFT = function(binSize, startTime) {
             for (let item of calced) {
                 buffer.push(item);
                 if (buffer.length > 512) {
-                    let query = dbConn.query(sql, [buffer], (error, results, fields) => {
+                    let dbConn1 = new mysql.createConnection(config.mysql);
+                    let query = dbConn1.query(sql, [buffer], (error, results, fields) => {
                         if (error) {
                             console.log(error);
-                            dbConn = null;
+                            // dbConn = null;
                         } else {
                         }
+
                     });
                     buffer = [];
-                }
-            }
-            let query = dbConn.query(sql, [buffer], (error, results, fields) => {
-                if (error) {
-                    console.log(error);
-                    dbConn = null;
-                } else {
-                    dbConn.end(function (err) {
+                    dbConn1.end(function (err) {
                         // The connection is terminated now
                     });
                 }
+            }
+            let dbConn1 = new mysql.createConnection(config.mysql);
+            let query = dbConn1.query(sql, [buffer], (error, results, fields) => {
+                if (error) {
+                    console.log(error);
+                    // dbConn = null;
+                } else {
+
+                }
+                dbConn1.end(function (err) {
+                    // The connection is terminated now
+                });
             });
             // console.log('sql', query.sql);
         }
