@@ -201,7 +201,7 @@ service.readTrade = function () {
             for (let item of trades['Buy']) {
                 if (item.price >= highestBuy && item.price < lowestSell) {
                     // hiddenOrders.push(item);
-                    if (hiddenOrdersBuffer.indexOf(item.trdMatchID) === -1) {
+                    if (hiddenOrderIDs.indexOf(item.trdMatchID) === -1) {
                         hiddenOrderIDs.push(item.trdMatchID);
                         hiddenOrdersBuffer.push(item);
                     }
@@ -286,7 +286,7 @@ service.commitData = function() {
                 // The connection is terminated now
             });
         });
-        commitFlag = true;
+        // commitFlag = true;
     }
 
     buffer = [];
