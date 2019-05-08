@@ -221,9 +221,9 @@ service.commitData = function() {
     console.log('buffer-length-start', ordersBuffer.length, hiddenOrdersBuffer.length);
     while (ordersBuffer.length) {
         item = ordersBuffer.shift();
-        orderIDs = orderIDs.filter(function(value, index, arr) {
-            return value == item.trdMatchID;
-        });
+        // orderIDs = orderIDs.filter(function(value, index, arr) {
+        //     return value == item.trdMatchID;
+        // });
         buffer.push([
             item.timestamp,
             item.symbol,
@@ -245,14 +245,15 @@ service.commitData = function() {
                 if (error) {
                     // console.log(error);
                     console.log('commitData', 'order');
-                    dbConn = null;
+                    // dbConn = null;
                 } else {
-                    dbConn.end(function (err) {
-                        // The connection is terminated now
-                    });
                 }
+                dbConn.end(function (err) {
+                    // The connection is terminated now
+                });
             });
             buffer = [];
+            orderIDs = [];
             commitFlag = true;
         }
         // sql = sprintf("INSERT INTO `orders`(`timestamp`, `symbol`, `side`, `size`, `price`, `tickDirection`, `trdMatchID`, `grossValue`, `homeNotional`, `foreignNotional`) SELECT * FROM (SELECT '%s' `timestamp`, '%s' `symbol`, '%s' `side`, '%s' `size`, '%s' `price`, '%s' `tickDirection`, '%s' `trdMatchID`, '%s' `grossValue`, '%s' `homeNotional`, '%s' `foreignNotional`) AS `tmp` WHERE NOT EXISTS (SELECT `id` FROM `orders` WHERE `trdMatchID` = '%s') LIMIT 0, 1;",
@@ -277,12 +278,12 @@ service.commitData = function() {
             if (error) {
                 // console.log(error);
                 console.log('commitData', 'order');
-                dbConn = null;
+                // dbConn = null;
             } else {
-                dbConn.end(function (err) {
-                    // The connection is terminated now
-                });
             }
+            dbConn.end(function (err) {
+                // The connection is terminated now
+            });
         });
         commitFlag = true;
     }
@@ -290,9 +291,9 @@ service.commitData = function() {
     buffer = [];
     while (hiddenOrdersBuffer.length) {
         item = hiddenOrdersBuffer.shift();
-        hiddenOrderIDs = hiddenOrderIDs.filter(function(value, index, arr) {
-            return value == item.trdMatchID;
-        });
+        // hiddenOrderIDs = hiddenOrderIDs.filter(function(value, index, arr) {
+        //     return value == item.trdMatchID;
+        // });
         buffer.push([
             item.timestamp,
             item.symbol,
@@ -314,14 +315,15 @@ service.commitData = function() {
                 if (error) {
                     // console.log(error);
                     console.log('commitData', 'hiddenOrder');
-                    dbConn = null;
+                    // dbConn = null;
                 } else {
-                    dbConn.end(function (err) {
-                        // The connection is terminated now
-                    });
                 }
+                dbConn.end(function (err) {
+                    // The connection is terminated now
+                });
             });
             buffer = [];
+            hiddenOrdersBuffer = [];
             commitFlag = true;
         }
         // sql = sprintf("INSERT INTO `hidden_orders`(`timestamp`, `symbol`, `side`, `size`, `price`, `tickDirection`, `trdMatchID`, " +
@@ -345,23 +347,27 @@ service.commitData = function() {
             if (error) {
                 // console.log(error);
                 console.log('commitData', 'hiddenOrder');
-                dbConn = null;
+                // dbConn = null;
             } else {
-                dbConn.end(function (err) {
-                    // The connection is terminated now
-                });
             }
-            setTimeout(service.commitData, 60000);
+            dbConn.end(function (err) {
+                // The connection is terminated now
+            });
+
+            // if (commitTimeoutId != null) {
+            //     clearTimeout(commitTimeoutId);
+            // }
+            // commitTimeoutId = setTimeout(service.commitData, 60000);
         });
         commitFlag = true;
         // console.log(query.sql);
     }
-    if (!commitFlag) {
+    // if (!commitFlag) {
         if (commitTimeoutId != null) {
-            clearTimeout(downloadBitmexTimeoutId.get(binSize));
+            clearTimeout(commitTimeoutId);
         }
         commitTimeoutId = setTimeout(service.commitData, 60000);
-    }
+    // }
     console.log('buffer-length-end', ordersBuffer.length, hiddenOrdersBuffer.length);
 };
 
