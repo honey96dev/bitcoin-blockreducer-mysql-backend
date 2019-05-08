@@ -221,9 +221,9 @@ service.commitData = function() {
     console.log('buffer-length-start', ordersBuffer.length, hiddenOrdersBuffer.length);
     while (ordersBuffer.length) {
         item = ordersBuffer.shift();
-        // orderIDs = orderIDs.filter(function(value, index, arr) {
-        //     return value == item.trdMatchID;
-        // });
+        orderIDs = orderIDs.filter(function(value, index, arr) {
+            return value != item.trdMatchID;
+        });
         buffer.push([
             item.timestamp,
             item.symbol,
@@ -267,8 +267,8 @@ service.commitData = function() {
         //     }
         // });
     }
-    ordersBuffer = [];
-    orderIDs = [];
+    // ordersBuffer = [];
+    // orderIDs = [];
     if (buffer.length > 0) {
 
         let dbConn = new mysql.createConnection(config.mysql);
@@ -292,9 +292,9 @@ service.commitData = function() {
     buffer = [];
     while (hiddenOrdersBuffer.length) {
         item = hiddenOrdersBuffer.shift();
-        // hiddenOrderIDs = hiddenOrderIDs.filter(function(value, index, arr) {
-        //     return value == item.trdMatchID;
-        // });
+        hiddenOrderIDs = hiddenOrderIDs.filter(function(value, index, arr) {
+            return value != item.trdMatchID;
+        });
         buffer.push([
             item.timestamp,
             item.symbol,
@@ -339,8 +339,8 @@ service.commitData = function() {
         //     }
         // });
     }
-    hiddenOrdersBuffer = [];
-    hiddenOrderIDs = [];
+    // hiddenOrdersBuffer = [];
+    // hiddenOrderIDs = [];
 
     if (buffer.length > 0) {
         let dbConn = new mysql.createConnection(config.mysql);
@@ -370,7 +370,7 @@ service.commitData = function() {
         if (commitTimeoutId != null) {
             clearTimeout(commitTimeoutId);
         }
-        commitTimeoutId = setTimeout(service.commitData, 60000);
+        commitTimeoutId = setTimeout(service.commitData, 30000);
     // }
     console.log('buffer-length-end', ordersBuffer.length, hiddenOrdersBuffer.length);
 };
