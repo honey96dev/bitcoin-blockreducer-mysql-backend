@@ -214,7 +214,7 @@ service.readTrade = function () {
 };
 
 service.commitData = function() {
-    let commitFlag = false;
+    // let commitFlag = false;
     let sql;
     let item;
     let buffer = [];
@@ -253,8 +253,7 @@ service.commitData = function() {
                 });
             });
             buffer = [];
-            orderIDs = [];
-            commitFlag = true;
+            // commitFlag = true;
         }
         // sql = sprintf("INSERT INTO `orders`(`timestamp`, `symbol`, `side`, `size`, `price`, `tickDirection`, `trdMatchID`, `grossValue`, `homeNotional`, `foreignNotional`) SELECT * FROM (SELECT '%s' `timestamp`, '%s' `symbol`, '%s' `side`, '%s' `size`, '%s' `price`, '%s' `tickDirection`, '%s' `trdMatchID`, '%s' `grossValue`, '%s' `homeNotional`, '%s' `foreignNotional`) AS `tmp` WHERE NOT EXISTS (SELECT `id` FROM `orders` WHERE `trdMatchID` = '%s') LIMIT 0, 1;",
         //     item.timestamp, item.symbol, item.side, item.size, item.price, item.tickDirection, item.trdMatchID,
@@ -268,6 +267,8 @@ service.commitData = function() {
         //     }
         // });
     }
+    ordersBuffer = [];
+    orderIDs = [];
     if (buffer.length > 0) {
 
         let dbConn = new mysql.createConnection(config.mysql);
@@ -323,8 +324,8 @@ service.commitData = function() {
                 });
             });
             buffer = [];
-            hiddenOrdersBuffer = [];
-            commitFlag = true;
+
+            // commitFlag = true;
         }
         // sql = sprintf("INSERT INTO `hidden_orders`(`timestamp`, `symbol`, `side`, `size`, `price`, `tickDirection`, `trdMatchID`, " +
         //     "`grossValue`, `homeNotional`, `foreignNotional`) " +
@@ -338,6 +339,9 @@ service.commitData = function() {
         //     }
         // });
     }
+    hiddenOrdersBuffer = [];
+    hiddenOrderIDs = [];
+
     if (buffer.length > 0) {
         let dbConn = new mysql.createConnection(config.mysql);
         sql = sprintf("INSERT INTO `hidden_orders`(`timestamp`, `symbol`, `side`, `size`, `price`, `tickDirection`, `trdMatchID`, `grossValue`, `homeNotional`, `foreignNotional`) VALUES ? ON DUPLICATE KEY UPDATE `timestamp` = VALUES(`timestamp`), `symbol` = VALUES(`symbol`), `side` = VALUES(`side`), `size` = VALUES(`size`), `price` = VALUES(`price`), `tickDirection` = VALUES(`tickDirection`), `trdMatchID` = VALUES(`trdMatchID`), `grossValue` = VALUES(`grossValue`), `homeNotional` = VALUES(`homeNotional`), `foreignNotional` = VALUES(`foreignNotional`);");
@@ -359,7 +363,7 @@ service.commitData = function() {
             // }
             // commitTimeoutId = setTimeout(service.commitData, 60000);
         });
-        commitFlag = true;
+        // commitFlag = true;
         // console.log(query.sql);
     }
     // if (!commitFlag) {
