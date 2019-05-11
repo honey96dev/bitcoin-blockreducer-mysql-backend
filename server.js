@@ -20,12 +20,10 @@ if (cluster.isWorker) {
     // put your code here
     bitmexService.readOrderBook();
     bitmexService.readTrade();
-// setTimeout(bitmexService.commitOrdersData, 60000);
     bitmexService.commitOrdersData();
     // setTimeout(bitmexService.commitVolumeData, 60000);
-// bitmexService.commitVolumeData();
 
-    bitmexService.downloadBitmexInstrumentData();
+    // bitmexService.downloadBitmexInstrumentData();
 
     setTimeout(bitmexService.getLastTimestamp4Bucket, 0, '5m', function (startTime) {
         bitmexService.downloadBitmexData('5m', startTime);
@@ -34,10 +32,6 @@ if (cluster.isWorker) {
     setTimeout(bitmexService.getLastTimestamp4Bucket, 30000, '1h', function (startTime) {
         bitmexService.downloadBitmexData('1h', startTime);
     });
-//
-// bitmexService.getLastTimestamp4Bucket('1h', function (startTime) {
-//     bitmexService.downloadBitmexData('1h', startTime);
-// });
 
     setTimeout(bitmexService.getLastTimestamp4Bucket, 15000, '1m', function (startTime) {
         bitmexService.downloadBitmexData('1m', startTime);
