@@ -17,11 +17,27 @@ let service = {};
 // let request1m = false;
 // let request5m = false;
 let downloadBitmexTimeoutId = new Map();
+let downloadBitmexInstrumentTimeoutId = null;
 let commitTimeoutId = null;
+let commitVolumeId = null;
 let ordersBuffer = [];
 let hiddenOrdersBuffer = [];
 let orderIDs = [];
 let hiddenOrderIDs = [];
+let volumeTimestamp = '';
+let calcedVolume1m = 0;
+let calcedVolume5m = 0;
+let calcedVolume1h = 0;
+let volumeCnt5m = 0;
+let volumeCnt1h = 0;
+
+let openInterest5m = 0;
+let openInterest1h = 0;
+let openValue5m = 0;
+let openValue1h = 0;
+let openInterestCnt5m = 0;
+let openInterestCnt1h = 0;
+// let openInterestTimoutId;
 
 service.downloadBitmexData = function (binSize, startTime) {
     try {
@@ -126,6 +142,123 @@ service.downloadBitmexData = function (binSize, startTime) {
     }
 };
 
+service.downloadBitmexInstrumentData = function () {
+    try {
+        let flag = false;
+        let url = sprintf('https://www.bitmex.com/api/v1/instrument?symbol=XBTUSD&count=100&reverse=false');
+        console.log('downloadBitmexInstrumentData', url);
+        request(url, function (error, response, body) {
+            // console.log('downloadBitmexData-end');
+            if (error) {
+                console.log(error);
+                // console.log(response.statusCode);
+            }
+            // if (body && body.length > 0 && body.charAt(0) != '<') {
+            if (response && response.statusCode === 200) {
+                let items = JSON.parse(body);
+                if (items.length > 0) {
+                    let sql;
+                    let lastTimestamp;
+                    let rows = [];
+                    let openInterests = [];
+                    for (let item of items) {
+                        rows.push([
+                            item.timestamp,
+                            parseFloat(item.vwap) * 3 / (parseFloat(item.highPrice) + parseFloat(item.lowPrice) + parseFloat(item.lastPrice)),
+                        ]);
+                        openInterests.push([
+                            item.timestamp,
+                            item.openInterest,
+                            item.openValue,
+                        ]);
+                        openInterest5m += item.openInterest;
+                        openValue5m += item.openValue;
+                        openInterest1h += item.openInterest;
+                        openValue1h += item.openValue;
+                    }
+                    sql = sprintf("INSERT INTO `vwap`(`timestamp`, `vwap_seed`) VALUES ? ON DUPLICATE KEY UPDATE `timestamp` = VALUES(`timestamp`), `vwap_seed` = VALUES(`vwap_seed`);");
+
+                    dbConn.query(sql, [rows], (error, results, fields) => {
+                        if (error) {
+                            console.log(error);
+                        } else {
+
+                        }
+                        // dbConn.end(function (err) {
+                        //     // The connection is terminated now
+                        // });
+                        console.log('vwap_seed-mysql-end');
+                    });
+
+                    sql = sprintf("INSERT INTO `interested_n_value_1m`(`timestamp`, `openInterest`, `openValue`) VALUES ? ON DUPLICATE KEY UPDATE `timestamp` = VALUES(`timestamp`), `openInterest` = VALUES(`openInterest`), `openValue` = VALUES(`openValue`);");
+                    dbConn.query(sql, [openInterests], (error, results, fields) => {
+                        if (error) {
+                            console.log(error);
+                        } else {
+
+                        }
+                        // dbConn.end(function (err) {
+                        //     // The connection is terminated now
+                        // });
+                        console.log('interested_n_value1m-mysql-end');
+                    });
+                    if (++openInterestCnt5m > 5) {
+                        openInterestCnt5m = 0;
+                        openInterest5m = 0;
+                        sql = sprintf("INSERT INTO `interested_n_value_5m`(`timestamp`, `openInterest`, `openValue`) VALUES ? ON DUPLICATE KEY UPDATE `timestamp` = VALUES(`timestamp`), `openInterest` = VALUES(`openInterest`), `openValue` = VALUES(`openValue`);");
+                        dbConn.query(sql, [openInterests], (error, results, fields) => {
+                            if (error) {
+                                console.log(error);
+                            } else {
+
+                            }
+                            // dbConn.end(function (err) {
+                            //     // The connection is terminated now
+                            // });
+                            console.log('interested_n_value5m-mysql-end');
+                        });
+                    }
+
+                    if (++openInterestCnt1h > 60) {
+                        openInterestCnt1h = 0;
+                        openInterest1h = 0;
+                        sql = sprintf("INSERT INTO `interested_n_value_1h`(`timestamp`, `openInterest`, `openValue`) VALUES ? ON DUPLICATE KEY UPDATE `timestamp` = VALUES(`timestamp`), `openInterest` = VALUES(`openInterest`), `openValue` = VALUES(`openValue`);");
+                        dbConn.query(sql, [openInterests], (error, results, fields) => {
+                            if (error) {
+                                console.log(error);
+                            } else {
+
+                            }
+                            // dbConn.end(function (err) {
+                            //     // The connection is terminated now
+                            // });
+                            console.log('interested_n_value1h-mysql-end');
+                            if (downloadBitmexInstrumentTimeoutId != null) {
+                                clearTimeout(downloadBitmexInstrumentTimeoutId);
+                            }
+                            downloadBitmexInstrumentTimeoutId = setTimeout(service.downloadBitmexInstrumentData, 60000);
+                        });
+                    }
+                    return;
+                }
+            }
+
+            if (downloadBitmexInstrumentTimeoutId != null) {
+                clearTimeout(downloadBitmexInstrumentTimeoutId);
+            }
+            downloadBitmexInstrumentTimeoutId = setTimeout(service.downloadBitmexInstrumentData, 60000);
+            console.log('1m', startTime);
+        });
+    } catch (e) {
+
+        if (downloadBitmexInstrumentTimeoutId.get(binSize) != null) {
+            clearTimeout(downloadBitmexInstrumentTimeoutId);
+        }
+        downloadBitmexInstrumentTimeoutId = setTimeout(service.downloadBitmexInstrumentData);
+        console.log('1m-exception', startTime);
+    }
+};
+
 service.getLastTimestamp4Bucket = function (binSize, callback) {
     const sql = sprintf("SELECT `timestamp` FROM `bitmex_data_%s` ORDER BY `timestamp` DESC LIMIT 0, 1;", binSize);
     dbConn.query(sql, null, (error, results, fields) => {
@@ -183,6 +316,7 @@ service.readTrade = function () {
                 if (orderIDs.indexOf(item.trdMatchID) === -1) {
                     orderIDs.push(item.trdMatchID);
                     ordersBuffer.push(item);
+                    volumeTimestamp = item.timestamp;
                 }
             }
             // console.log(JSON.stringify(trades));
@@ -193,6 +327,9 @@ service.readTrade = function () {
                     if (hiddenOrderIDs.indexOf(item.trdMatchID) === -1) {
                         hiddenOrderIDs.push(item.trdMatchID);
                         hiddenOrdersBuffer.push(item);
+                        calcedVolume1m -= item.price;
+                        calcedVolume5m -= item.price;
+                        calcedVolume1h -= item.price;
                     }
                     // console.log('Hidden Sell', highestBuy, item.price, lowestSell, item.trdMatchID, JSON.stringify(item));
                 }
@@ -203,6 +340,9 @@ service.readTrade = function () {
                     if (hiddenOrderIDs.indexOf(item.trdMatchID) === -1) {
                         hiddenOrderIDs.push(item.trdMatchID);
                         hiddenOrdersBuffer.push(item);
+                        calcedVolume1m += item.price;
+                        calcedVolume5m += item.price;
+                        calcedVolume1h += item.price;
                     }
                     // console.log('Hidden Buy ', highestBuy, item.price, lowestSell, item.trdMatchID, JSON.stringify(item));
                 }
@@ -211,8 +351,49 @@ service.readTrade = function () {
         }
     });
 };
+//
+// service.readVolume = function() {
+//     bitmexClient.addStream('XBTUSD', 'trade', (data, symbol, tableName) => {
+//         if (data.length > 0) {
+//             let trades = {
+//                 'Sell': [],
+//                 'Buy': [],
+//             };
+//             for (let item of data) {
+//                 trades[item.side].push(item);
+//                 if (orderIDs.indexOf(item.trdMatchID) === -1) {
+//                     orderIDs.push(item.trdMatchID);
+//                     ordersBuffer.push(item);
+//                 }
+//             }
+//             // console.log(JSON.stringify(trades));
+//             // let hiddenOrders = [];
+//             for (let item of trades['Sell']) {
+//                 if (item.price > highestBuy && item.price <= lowestSell) {
+//                     // hiddenOrders.push(item);
+//                     if (hiddenOrderIDs.indexOf(item.trdMatchID) === -1) {
+//                         hiddenOrderIDs.push(item.trdMatchID);
+//                         hiddenOrdersBuffer.push(item);
+//                     }
+//                     // console.log('Hidden Sell', highestBuy, item.price, lowestSell, item.trdMatchID, JSON.stringify(item));
+//                 }
+//             }
+//             for (let item of trades['Buy']) {
+//                 if (item.price >= highestBuy && item.price < lowestSell) {
+//                     // hiddenOrders.push(item);
+//                     if (hiddenOrderIDs.indexOf(item.trdMatchID) === -1) {
+//                         hiddenOrderIDs.push(item.trdMatchID);
+//                         hiddenOrdersBuffer.push(item);
+//                     }
+//                     // console.log('Hidden Buy ', highestBuy, item.price, lowestSell, item.trdMatchID, JSON.stringify(item));
+//                 }
+//             }
+//
+//         }
+//     });
+// };
 
-service.commitData = function() {
+service.commitOrdersData = function() {
     // let commitFlag = false;
     let sql;
     let item;
@@ -243,7 +424,7 @@ service.commitData = function() {
             dbConn.query(sql, [buffer], (error, results, fields) => {
                 if (error) {
                     // console.log(error);
-                    console.log('commitData', 'order');
+                    console.log('commitOrdersData', 'order');
                     // dbConn = null;
                 } else {
                 }
@@ -277,7 +458,7 @@ service.commitData = function() {
         dbConn.query(sql, [buffer], (error, results, fields) => {
             if (error) {
                 // console.log(error);
-                console.log('commitData', 'order');
+                console.log('commitOrdersData', 'order');
                 // dbConn = null;
             } else {
             }
@@ -314,7 +495,7 @@ service.commitData = function() {
             dbConn.query(sql, [buffer], (error, results, fields) => {
                 if (error) {
                     // console.log(error);
-                    console.log('commitData', 'hiddenOrder');
+                    console.log('commitOrdersData', 'hiddenOrder');
                     // dbConn = null;
                 } else {
                 }
@@ -349,7 +530,7 @@ service.commitData = function() {
         let query = dbConn.query(sql, [buffer], (error, results, fields) => {
             if (error) {
                 // console.log(error);
-                console.log('commitData', 'hiddenOrder');
+                console.log('commitOrdersData', 'hiddenOrder');
                 // dbConn = null;
             } else {
             }
@@ -360,7 +541,7 @@ service.commitData = function() {
             // if (commitTimeoutId != null) {
             //     clearTimeout(commitTimeoutId);
             // }
-            // commitTimeoutId = setTimeout(service.commitData, 60000);
+            // commitTimeoutId = setTimeout(service.commitOrdersData, 60000);
         });
         // commitFlag = true;
         // console.log(query.sql);
@@ -369,9 +550,62 @@ service.commitData = function() {
         if (commitTimeoutId != null) {
             clearTimeout(commitTimeoutId);
         }
-        commitTimeoutId = setTimeout(service.commitData, 30000);
+        commitTimeoutId = setTimeout(service.commitOrdersData, 30000);
     // }
     console.log('buffer-length-end', ordersBuffer.length, hiddenOrdersBuffer.length);
+};
+
+service.commitVolumeData = function() {
+    console.log('commitVolumeData', volumeTimestamp);
+    let sql = sprintf("INSERT INTO volume_1m(`timestamp`, `volume`) VALUES ('%s', '%f') ON DUPLICATE KEY UPDATE `timestamp` = VALUES(`timestamp`), `volume` = VALUES(`volume`);", volumeTimestamp, calcedVolume1m);
+    calcedVolume1m = 0;
+    dbConn.query(sql, null, (error, results, fields) => {
+        if (error) {
+            console.log(error);
+            // dbConn = null;
+        } else {
+
+        }
+        // dbConn1.end(function (err) {
+        //     // The connection is terminated now
+        // });
+    });
+    if (++volumeCnt5m > 5) {
+        volumeCnt5m = 0;
+        sql = sprintf("INSERT INTO volume_5m(`timestamp`, `volume`) VALUES ('%s', '%f') ON DUPLICATE KEY UPDATE `timestamp` = VALUES(`timestamp`), `volume` = VALUES(`volume`);", volumeTimestamp, calcedVolume5m);
+        calcedVolume5m = 0;
+        dbConn.query(sql, null, (error, results, fields) => {
+            if (error) {
+                console.log(error);
+                // dbConn = null;
+            } else {
+
+            }
+            // dbConn1.end(function (err) {
+            //     // The connection is terminated now
+            // });
+        });
+    }
+    if (++volumeCnt1h > 60) {
+        volumeCnt1h = 0;
+        sql = sprintf("INSERT INTO volume_1h(`timestamp`, `volume`) VALUES ('%s', '%f') ON DUPLICATE KEY UPDATE `timestamp` = VALUES(`timestamp`), `volume` = VALUES(`volume`);", volumeTimestamp, calcedVolume1h);
+        calcedVolume1h = 0;
+        dbConn.query(sql, null, (error, results, fields) => {
+            if (error) {
+                console.log(error);
+                // dbConn = null;
+            } else {
+
+            }
+            // dbConn1.end(function (err) {
+            //     // The connection is terminated now
+            // });
+        });
+    }
+    if (commitVolumeId != null) {
+        clearTimeout(commitVolumeId);
+    }
+    commitVolumeId = setTimeout(service.commitVolumeData, 60000);
 };
 
 service.calculateFFT = function(binSize, startTime) {
