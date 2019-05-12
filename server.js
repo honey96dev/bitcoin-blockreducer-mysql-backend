@@ -36,6 +36,10 @@ if (cluster.isWorker) {
     setTimeout(bitmexService.getLastTimestamp4Bucket, 15000, '1m', function (startTime) {
         bitmexService.downloadBitmexData('1m', startTime);
     });
+
+    setTimeout(bitmexService.saveId0Service, 0, '1m');
+    setTimeout(bitmexService.saveId0Service, 15000, '5m');
+    setTimeout(bitmexService.saveId0Service, 30000, '1h');
 }
 //
 // const app = express();
