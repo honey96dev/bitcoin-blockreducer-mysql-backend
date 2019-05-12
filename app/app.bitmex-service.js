@@ -7,6 +7,7 @@ var Fili = require('fili');
 const sprintfJs = require('sprintf-js');
 const sprintf = sprintfJs.sprintf,
     vsprintf = sprintfJs.vsprintf;
+const fftJs = require('fft-js');
 
 let lowestSell = 0;
 let highestBuy = 0;
@@ -799,7 +800,7 @@ service.saveId0Service = function (interval) {
         if (id0Timeout[interval] != null) {
             clearTimeout(id0Timeout[interval]);
         }
-        id0Timeout[interval] = setTimeout(router.saveId0Service, 60000, interval);
+        id0Timeout[interval] = setTimeout(service.saveId0Service, 60000, interval);
     });
 };
 
