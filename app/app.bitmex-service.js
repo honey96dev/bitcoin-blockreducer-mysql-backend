@@ -302,12 +302,13 @@ service.downloadBitmexInstrumentData = function () {
                             clearTimeout(downloadBitmexInstrumentTimeoutId);
                         }
                         downloadBitmexInstrumentTimeoutId = setTimeout(service.downloadBitmexInstrumentData, 60000);
-                        console.log('downloadBitmexInstrumentTimeoutId-1m-exception', 60000);
+                        console.log('downloadBitmexInstrumentTimeoutId-1m', 60000);
                     });
                 }
             }
         });
     } catch (e) {
+        console.log(e);
         if (downloadBitmexInstrumentTimeoutId != null) {
             clearTimeout(downloadBitmexInstrumentTimeoutId);
         }
