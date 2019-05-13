@@ -40,6 +40,11 @@ let openInterestCnt5m = 0;
 let openInterestCnt1h = 0;
 // let openInterestTimoutId;
 
+let vwap5m = 0;
+let vwap5mCnt= 0;
+let vwap1h = 0;
+let vwap1hCnt= 0;
+
 service.downloadBitmexData = function (binSize, startTime) {
     try {
         if (startTime.length == 0) {
@@ -145,6 +150,7 @@ service.downloadBitmexData = function (binSize, startTime) {
 
 service.downloadBitmexInstrumentData = function () {
     try {
+        let timestamp;
         let flag = false;
         let url = sprintf('https://www.bitmex.com/api/v1/instrument?symbol=XBTUSD&count=100&reverse=false');
         console.log('downloadBitmexInstrumentData', url);
@@ -162,24 +168,71 @@ service.downloadBitmexInstrumentData = function () {
                     let lastTimestamp;
                     let rows = [];
                     let openInterests = [];
-                    for (let item of items) {
-                        rows.push([
-                            item.timestamp,
+                    let item = items[0]; {
+                        lastTimestamp = item.timestamp;
+                        timestamp = new Date(lastTimestamp);
+                        timestamp.setMinutes(timestamp.getMinutes(), 0, 0);
+                        rows = [
+                            timestamp.toISOString(),
                             parseFloat(item.vwap) * 3 / (parseFloat(item.highPrice) + parseFloat(item.lowPrice) + parseFloat(item.lastPrice)),
-                        ]);
-                        openInterests.push([
-                            item.timestamp,
+                        ];
+                        vwap5m += rows[1];
+                        vwap1h += rows[1];
+                        openInterests = [
+                            timestamp.toISOString(),
                             item.openInterest,
                             item.openValue,
-                        ]);
+                        ];
                         openInterest5m += item.openInterest;
                         openValue5m += item.openValue;
                         openInterest1h += item.openInterest;
                         openValue1h += item.openValue;
                     }
-                    sql = sprintf("INSERT INTO `vwap`(`timestamp`, `vwap_seed`) VALUES ? ON DUPLICATE KEY UPDATE `timestamp` = VALUES(`timestamp`), `vwap_seed` = VALUES(`vwap_seed`);");
 
-                    dbConn.query(sql, [rows], (error, results, fields) => {
+                    if (++vwap5mCnt > 5) {
+                        timestamp = new Date(lastTimestamp);
+                        timestamp.setMinutes(Math.floor(timestamp.getMinutes() / 5) * 5, 0, 0);
+                        sql = sprintf("INSERT INTO `vwap_5m`(`timestamp`, `vwap_seed`) VALUES ('%s', '%f') ON DUPLICATE KEY UPDATE `timestamp` = VALUES(`timestamp`), `vwap_seed` = VALUES(`vwap_seed`);", timestamp.toISOString(), vwap5m / 5);
+                        vwap5mCnt = 0;
+                        vwap5m = 0;
+                        // console.log(sql);
+                        dbConn.query(sql, null, (error, results, fields) => {
+                            if (error) {
+                                console.log(error);
+                            } else {
+
+                            }
+                            // dbConn.end(function (err) {
+                            //     // The connection is terminated now
+                            // });
+                            console.log('vwap_seed-mysql-end');
+                        });
+                    }
+
+                    if (++vwap1hCnt > 60) {
+                        timestamp = new Date(lastTimestamp);
+                        timestamp.setMinutes(Math.floor(timestamp.getMinutes() / 5) * 5, 0, 0);
+                        sql = sprintf("INSERT INTO `vwap_1h`(`timestamp`, `vwap_seed`) VALUES ('%s', '%f') ON DUPLICATE KEY UPDATE `timestamp` = VALUES(`timestamp`), `vwap_seed` = VALUES(`vwap_seed`);", timestamp.toISOString(), vwap1h / 60);
+                        vwap1hCnt = 0;
+                        vwap1h = 0;
+                        // console.log(sql);
+                        dbConn.query(sql, null, (error, results, fields) => {
+                            if (error) {
+                                console.log(error);
+                            } else {
+
+                            }
+                            // dbConn.end(function (err) {
+                            //     // The connection is terminated now
+                            // });
+                            console.log('vwap_seed-mysql-end');
+                        });
+                    }
+
+                    sql = sprintf("INSERT INTO `vwap_1m`(`timestamp`, `vwap_seed`) VALUES ('%s', '%f') ON DUPLICATE KEY UPDATE `timestamp` = VALUES(`timestamp`), `vwap_seed` = VALUES(`vwap_seed`);", rows[0], rows[1]);
+
+                    // console.log(sql);
+                    dbConn.query(sql, null, (error, results, fields) => {
                         if (error) {
                             console.log(error);
                         } else {
@@ -191,23 +244,15 @@ service.downloadBitmexInstrumentData = function () {
                         console.log('vwap_seed-mysql-end');
                     });
 
-                    sql = sprintf("INSERT INTO `interested_n_value_1m`(`timestamp`, `openInterest`, `openValue`) VALUES ? ON DUPLICATE KEY UPDATE `timestamp` = VALUES(`timestamp`), `openInterest` = VALUES(`openInterest`), `openValue` = VALUES(`openValue`);");
-                    dbConn.query(sql, [openInterests], (error, results, fields) => {
-                        if (error) {
-                            console.log(error);
-                        } else {
-
-                        }
-                        // dbConn.end(function (err) {
-                        //     // The connection is terminated now
-                        // });
-                        console.log('interested_n_value1m-mysql-end');
-                    });
                     if (++openInterestCnt5m > 5) {
+                        timestamp = new Date(lastTimestamp);
+                        timestamp.setMinutes(Math.floor(timestamp.getMinutes() / 5) * 5, 0, 0);
+                        sql = sprintf("INSERT INTO `interested_n_value_5m`(`timestamp`, `openInterest`, `openValue`) VALUES ('%s', '%f', '%f') ON DUPLICATE KEY UPDATE `timestamp` = VALUES(`timestamp`), `openInterest` = VALUES(`openInterest`), `openValue` = VALUES(`openValue`);", timestamp.toISOString(), openInterest5m / 5, openValue5m / 5);
                         openInterestCnt5m = 0;
                         openInterest5m = 0;
-                        sql = sprintf("INSERT INTO `interested_n_value_5m`(`timestamp`, `openInterest`, `openValue`) VALUES ? ON DUPLICATE KEY UPDATE `timestamp` = VALUES(`timestamp`), `openInterest` = VALUES(`openInterest`), `openValue` = VALUES(`openValue`);");
-                        dbConn.query(sql, [openInterests], (error, results, fields) => {
+                        openValue5m = 0;
+                        // console.log(sql);
+                        dbConn.query(sql, null, (error, results, fields) => {
                             if (error) {
                                 console.log(error);
                             } else {
@@ -221,10 +266,14 @@ service.downloadBitmexInstrumentData = function () {
                     }
 
                     if (++openInterestCnt1h > 60) {
+                        timestamp = new Date(lastTimestamp);
+                        timestamp.setHours(timestamp.getHours(), 0, 0, 0);
+                        sql = sprintf("INSERT INTO `interested_n_value_1h`(`timestamp`, `openInterest`, `openValue`) VALUES ('%s', '%f', '%f') ON DUPLICATE KEY UPDATE `timestamp` = VALUES(`timestamp`), `openInterest` = VALUES(`openInterest`), `openValue` = VALUES(`openValue`);", timestamp.toISOString(), openInterest1h / 60, openValue1h / 60);
                         openInterestCnt1h = 0;
                         openInterest1h = 0;
-                        sql = sprintf("INSERT INTO `interested_n_value_1h`(`timestamp`, `openInterest`, `openValue`) VALUES ? ON DUPLICATE KEY UPDATE `timestamp` = VALUES(`timestamp`), `openInterest` = VALUES(`openInterest`), `openValue` = VALUES(`openValue`);");
-                        dbConn.query(sql, [openInterests], (error, results, fields) => {
+                        openValue1h = 0;
+                        // console.log(sql);
+                        dbConn.query(sql, null, (error, results, fields) => {
                             if (error) {
                                 console.log(error);
                             } else {
@@ -234,29 +283,36 @@ service.downloadBitmexInstrumentData = function () {
                             //     // The connection is terminated now
                             // });
                             console.log('interested_n_value1h-mysql-end');
-                            if (downloadBitmexInstrumentTimeoutId != null) {
-                                clearTimeout(downloadBitmexInstrumentTimeoutId);
-                            }
-                            downloadBitmexInstrumentTimeoutId = setTimeout(service.downloadBitmexInstrumentData, 60000);
                         });
                     }
-                    return;
+
+                    sql = sprintf("INSERT INTO `interested_n_value_1m`(`timestamp`, `openInterest`, `openValue`) VALUES ('%s', '%f', '%f') ON DUPLICATE KEY UPDATE `timestamp` = VALUES(`timestamp`), `openInterest` = VALUES(`openInterest`), `openValue` = VALUES(`openValue`);", openInterests[0], openInterests[1], openInterests[2]);
+                    // console.log(sql);
+                    dbConn.query(sql, [openInterests], (error, results, fields) => {
+                        if (error) {
+                            console.log(error);
+                        } else {
+
+                        }
+                        // dbConn.end(function (err) {
+                        //     // The connection is terminated now
+                        // });
+                        console.log('interested_n_value1m-mysql-end');
+                        if (downloadBitmexInstrumentTimeoutId != null) {
+                            clearTimeout(downloadBitmexInstrumentTimeoutId);
+                        }
+                        downloadBitmexInstrumentTimeoutId = setTimeout(service.downloadBitmexInstrumentData, 60000);
+                        console.log('downloadBitmexInstrumentTimeoutId-1m-exception', 60000);
+                    });
                 }
             }
-
-            if (downloadBitmexInstrumentTimeoutId != null) {
-                clearTimeout(downloadBitmexInstrumentTimeoutId);
-            }
-            downloadBitmexInstrumentTimeoutId = setTimeout(service.downloadBitmexInstrumentData, 60000);
-            console.log('1m', startTime);
         });
     } catch (e) {
-
-        if (downloadBitmexInstrumentTimeoutId.get(binSize) != null) {
+        if (downloadBitmexInstrumentTimeoutId != null) {
             clearTimeout(downloadBitmexInstrumentTimeoutId);
         }
-        downloadBitmexInstrumentTimeoutId = setTimeout(service.downloadBitmexInstrumentData);
-        console.log('1m-exception', startTime);
+        downloadBitmexInstrumentTimeoutId = setTimeout(service.downloadBitmexInstrumentData, 60000);
+        console.log('downloadBitmexInstrumentData-1m-exception', 60000);
     }
 };
 
@@ -558,22 +614,13 @@ service.commitOrdersData = function() {
 
 service.commitVolumeData = function() {
     console.log('commitVolumeData', volumeTimestamp);
-    let sql = sprintf("INSERT INTO volume_1m(`timestamp`, `volume`) VALUES ('%s', '%f') ON DUPLICATE KEY UPDATE `timestamp` = VALUES(`timestamp`), `volume` = VALUES(`volume`);", volumeTimestamp, calcedVolume1m);
-    calcedVolume1m = 0;
-    dbConn.query(sql, null, (error, results, fields) => {
-        if (error) {
-            console.log(error);
-            // dbConn = null;
-        } else {
-
-        }
-        // dbConn1.end(function (err) {
-        //     // The connection is terminated now
-        // });
-    });
+    let sql;
+    let timestamp;
     if (++volumeCnt5m > 5) {
+        timestamp = new Date(volumeTimestamp);
+        timestamp.setMinutes(Math.floor(timestamp.getMinutes() / 5) * 5, 0, 0);
         volumeCnt5m = 0;
-        sql = sprintf("INSERT INTO volume_5m(`timestamp`, `volume`) VALUES ('%s', '%f') ON DUPLICATE KEY UPDATE `timestamp` = VALUES(`timestamp`), `volume` = VALUES(`volume`);", volumeTimestamp, calcedVolume5m);
+        sql = sprintf("INSERT INTO volume_5m(`timestamp`, `volume`) VALUES ('%s', '%f') ON DUPLICATE KEY UPDATE `timestamp` = VALUES(`timestamp`), `volume` = VALUES(`volume`);", timestamp.toISOString(), calcedVolume5m);
         calcedVolume5m = 0;
         dbConn.query(sql, null, (error, results, fields) => {
             if (error) {
@@ -588,8 +635,10 @@ service.commitVolumeData = function() {
         });
     }
     if (++volumeCnt1h > 60) {
+        timestamp = new Date(volumeTimestamp);
+        timestamp.setHours(timestamp.getHours(), 0, 0, 0);
         volumeCnt1h = 0;
-        sql = sprintf("INSERT INTO volume_1h(`timestamp`, `volume`) VALUES ('%s', '%f') ON DUPLICATE KEY UPDATE `timestamp` = VALUES(`timestamp`), `volume` = VALUES(`volume`);", volumeTimestamp, calcedVolume1h);
+        sql = sprintf("INSERT INTO volume_1h(`timestamp`, `volume`) VALUES ('%s', '%f') ON DUPLICATE KEY UPDATE `timestamp` = VALUES(`timestamp`), `volume` = VALUES(`volume`);", timestamp.toISOString(), calcedVolume1h);
         calcedVolume1h = 0;
         dbConn.query(sql, null, (error, results, fields) => {
             if (error) {
@@ -603,10 +652,27 @@ service.commitVolumeData = function() {
             // });
         });
     }
-    if (commitVolumeId != null) {
-        clearTimeout(commitVolumeId);
-    }
-    commitVolumeId = setTimeout(service.commitVolumeData, 60000);
+    timestamp = new Date(volumeTimestamp);
+    timestamp.setMinutes(timestamp.getMinutes(), 0, 0);
+    sql = sprintf("INSERT INTO volume_1m(`timestamp`, `volume`) VALUES ('%s', '%f') ON DUPLICATE KEY UPDATE `timestamp` = VALUES(`timestamp`), `volume` = VALUES(`volume`);", timestamp.toISOString(), calcedVolume1m);
+    calcedVolume1m = 0;
+    dbConn.query(sql, null, (error, results, fields) => {
+        if (error) {
+            console.log(error);
+            // dbConn = null;
+        } else {
+
+        }
+        console.log('commitVolumeData', volumeTimestamp);
+        if (commitVolumeId != null) {
+            clearTimeout(commitVolumeId);
+        }
+        commitVolumeId = setTimeout(service.commitVolumeData, 60000);
+        console.log('commitVolumeData', 60000);
+        // dbConn1.end(function (err) {
+        //     // The connection is terminated now
+        // });
+    });
 };
 
 service.calculateFFT = function(binSize, startTime) {
@@ -835,7 +901,7 @@ function _calculateId0(interval, callback) {
             }
         }
         let resultCnt = results.length;
-        if (!power_of_2(resultCnt)) {
+        if (results.length < 2048) {
             const cnt = resultCnt;
             const last = results[cnt - 1];
             for (let i = cnt; i < 2048; i++) {

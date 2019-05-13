@@ -21,9 +21,9 @@ if (cluster.isWorker) {
     bitmexService.readOrderBook();
     bitmexService.readTrade();
     bitmexService.commitOrdersData();
-    // setTimeout(bitmexService.commitVolumeData, 60000);
+    setTimeout(bitmexService.commitVolumeData, 60000);
 
-    // bitmexService.downloadBitmexInstrumentData();
+    bitmexService.downloadBitmexInstrumentData();
 
     setTimeout(bitmexService.getLastTimestamp4Bucket, 0, '5m', function (startTime) {
         bitmexService.downloadBitmexData('5m', startTime);
