@@ -189,7 +189,7 @@ service.downloadBitmexInstrumentData = function () {
                         openValue1h += item.openValue;
                     }
 
-                    if (++vwap5mCnt > 5) {
+                    if (++vwap5mCnt == 5) {
                         timestamp = new Date(lastTimestamp);
                         timestamp.setMinutes(Math.floor(timestamp.getMinutes() / 5) * 5, 0, 0);
                         sql = sprintf("INSERT INTO `vwap_5m`(`timestamp`, `vwap_seed`) VALUES ('%s', '%f') ON DUPLICATE KEY UPDATE `timestamp` = VALUES(`timestamp`), `vwap_seed` = VALUES(`vwap_seed`);", timestamp.toISOString(), vwap5m / 5);
@@ -209,7 +209,7 @@ service.downloadBitmexInstrumentData = function () {
                         });
                     }
 
-                    if (++vwap1hCnt > 60) {
+                    if (++vwap1hCnt == 60) {
                         timestamp = new Date(lastTimestamp);
                         timestamp.setMinutes(Math.floor(timestamp.getMinutes() / 5) * 5, 0, 0);
                         sql = sprintf("INSERT INTO `vwap_1h`(`timestamp`, `vwap_seed`) VALUES ('%s', '%f') ON DUPLICATE KEY UPDATE `timestamp` = VALUES(`timestamp`), `vwap_seed` = VALUES(`vwap_seed`);", timestamp.toISOString(), vwap1h / 60);
@@ -244,7 +244,7 @@ service.downloadBitmexInstrumentData = function () {
                         console.log('vwap_seed-mysql-end');
                     });
 
-                    if (++openInterestCnt5m > 5) {
+                    if (++openInterestCnt5m == 5) {
                         timestamp = new Date(lastTimestamp);
                         timestamp.setMinutes(Math.floor(timestamp.getMinutes() / 5) * 5, 0, 0);
                         sql = sprintf("INSERT INTO `interested_n_value_5m`(`timestamp`, `openInterest`, `openValue`) VALUES ('%s', '%f', '%f') ON DUPLICATE KEY UPDATE `timestamp` = VALUES(`timestamp`), `openInterest` = VALUES(`openInterest`), `openValue` = VALUES(`openValue`);", timestamp.toISOString(), openInterest5m / 5, openValue5m / 5);
@@ -265,7 +265,7 @@ service.downloadBitmexInstrumentData = function () {
                         });
                     }
 
-                    if (++openInterestCnt1h > 60) {
+                    if (++openInterestCnt1h == 60) {
                         timestamp = new Date(lastTimestamp);
                         timestamp.setHours(timestamp.getHours(), 0, 0, 0);
                         sql = sprintf("INSERT INTO `interested_n_value_1h`(`timestamp`, `openInterest`, `openValue`) VALUES ('%s', '%f', '%f') ON DUPLICATE KEY UPDATE `timestamp` = VALUES(`timestamp`), `openInterest` = VALUES(`openInterest`), `openValue` = VALUES(`openValue`);", timestamp.toISOString(), openInterest1h / 60, openValue1h / 60);
