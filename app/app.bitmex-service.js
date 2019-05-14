@@ -304,8 +304,15 @@ service.downloadBitmexInstrumentData = function () {
                         downloadBitmexInstrumentTimeoutId = setTimeout(service.downloadBitmexInstrumentData, 60000);
                         console.log('downloadBitmexInstrumentTimeoutId-1m', 60000);
                     });
+                    return;
                 }
             }
+            console.log('interested_n_value1m-mysql-end');
+            if (downloadBitmexInstrumentTimeoutId != null) {
+                clearTimeout(downloadBitmexInstrumentTimeoutId);
+            }
+            downloadBitmexInstrumentTimeoutId = setTimeout(service.downloadBitmexInstrumentData, 60000);
+            console.log('downloadBitmexInstrumentTimeoutId-1m', 60000);
         });
     } catch (e) {
         console.log(e);
