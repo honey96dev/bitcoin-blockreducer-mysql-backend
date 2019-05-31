@@ -671,16 +671,16 @@ service.commitVolumeData = function() {
         } else {
 
         }
-        console.log('commitVolumeData', volumeTimestamp);
-        if (commitVolumeId != null) {
-            clearTimeout(commitVolumeId);
-        }
-        commitVolumeId = setTimeout(service.commitVolumeData, 60000);
-        console.log('commitVolumeData', 60000);
         // dbConn1.end(function (err) {
         //     // The connection is terminated now
         // });
     });
+    console.log('commitVolumeData', volumeTimestamp);
+    if (commitVolumeId != null) {
+        clearTimeout(commitVolumeId);
+    }
+    commitVolumeId = setTimeout(service.commitVolumeData, 60000);
+    console.log('commitVolumeData', 60000);
 };
 
 service.calculateFFT = function(binSize, startTime) {
