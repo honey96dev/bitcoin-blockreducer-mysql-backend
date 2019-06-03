@@ -736,10 +736,21 @@ service.calculateFFT = function(binSize, startTime) {
                     maxChange.push(maxChange1);
                 }
                 const resultLast = results.length - 1;
+                let lastTime = new Date(results[resultLast].timestamp);
+                let timeStep = 0;
+                if (binSize === '1m') {
+                    timeStep = 60000;
+                } else if (binSize === '5m') {
+                    timeStep = 300000;
+                } else if (binSize === '1h') {
+                    timeStep = 3600000;
+                }
                 for (let i = 0; i < 100; i++) {
                     // calced.push(results[resultLast]);
                     // ids.push(results[resultLast].id);
-                    timestamps.push(results[resultLast].timestamp);
+                    lastTime = new Date(lastTime.getTime() + timeStep);
+                    timestamps.push(lastTime.toISOString());
+                    // timestamps.push(results[resultLast].timestamp);
                     open.push(results[resultLast].open);
                     high.push(results[resultLast].high);
                     low.push(results[resultLast].low);
@@ -848,28 +859,29 @@ service.saveId0Service = function (interval) {
         if (results.result && results.result == 'error') {
             console.log('saveId0Service-error', interval);
         } else {
-            let sql = sprintf("SELECT COUNT(`timestamp`) `count` FROM `id0_%s` WHERE `timestamp` = '%s';", interval, results.timestamp);
-
-            dbConn.query(sql, null, (error, resultsNoUse, fields) => {
-                if (error) {
-                    console.log(error);
-                    return;
-                }
-                // console.log(resultsNoUse[0].count);
-                // return;
-                if (resultsNoUse[0].count > 0) {
-                    return;
-                }
-                sql = sprintf("INSERT INTO `id0_%s` (`timestamp`, `open`, `high`, `low`, `close`, `num_3`, `num_3i`, `num_6`, `num_6i`, `num_9`, `num_9i`, `num_100`, `num_100i`) VALUES ('%s', %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);", interval, results.timestamp, results.open, results.high, results.low, results.close, results.num_3, results.num_3i, results.num_6, results.num_6i, results.num_9, results.num_9i, results.num_100, results.num_100i);
+            // let sql = sprintf("SELECT COUNT(`timestamp`) `count` FROM `id0_%s` WHERE `timestamp` = '%s';", interval, results.timestamp);
+            //
+            // dbConn.query(sql, null, (error, resultsNoUse, fields) => {
+            //     if (error) {
+            //         console.log(error);
+            //         return;
+            //     }
+            //     // console.log(resultsNoUse[0].count);
+            //     // return;
+            //     if (resultsNoUse[0].count > 0) {
+            //         return;
+            //     }
+            //     let sql = sprintf("INSERT INTO `id0_%s` (`timestamp`, `open`, `high`, `low`, `close`, `num_3`, `num_3i`, `num_6`, `num_6i`, `num_9`, `num_9i`, `num_100`, `num_100i`) VALUES ('%s', %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);", interval, results.timestamp, results.open, results.high, results.low, results.close, results.num_3, results.num_3i, results.num_6, results.num_6i, results.num_9, results.num_9i, results.num_100, results.num_100i);
+                let sql = sprintf("INSERT INTO `id0_%s` (`timestamp`, `open`, `high`, `low`, `close`, `num_3`, `num_3i`, `num_6`, `num_6i`, `num_9`, `num_9i`, `num_100`, `num_100i`) VALUES ? ON DUPLICATE KEY UPDATE `timestamp` = VALUES(`timestamp`), `open` = VALUES(`open`), `high` = VALUES(`high`), `low` = VALUES(`low`), `close` = VALUES(`close`), `num_3` = VALUES(`num_3`), `num_3i` = VALUES(`num_3i`), `num_6` = VALUES(`num_6`), `num_6i` = VALUES(`num_6i`), `num_9` = VALUES(`num_9`), `num_9i` = VALUES(`num_9i`), `num_100` = VALUES(`num_100`), `num_100i` = VALUES(`num_100i`);", interval);
                 // console.log(sql);
-                dbConn.query(sql, null, (error, results, fields) => {
+                dbConn.query(sql, [results], (error, results, fields) => {
                     if (error) {
                         console.log('saveId0Service-save-error', error);
                     } else {
                         console.log('saveId0Service-save-success', interval);
                     }
                 });
-            });
+            // });
         }
         if (id0Timeout[interval] != null) {
             clearTimeout(id0Timeout[interval]);
@@ -911,9 +923,31 @@ function _calculateId0(interval, callback) {
         let resultCnt = results.length;
         if (results.length < 2048) {
             const cnt = resultCnt;
+            let lastTime = new Date(results[cnt - 1].timestamp);
+            let timeStep = 0;
+            if (interval === '1m') {
+                timeStep = 60000;
+            } else if (interval === '5m') {
+                timeStep = 300000;
+            } else if (interval === '1h') {
+                timeStep = 3600000;
+            }
             const last = results[cnt - 1];
             for (let i = cnt; i < 2048; i++) {
-                results.push(last);
+                // results.push(last);
+                lastTime = new Date(lastTime.getTime() + timeStep);
+                results.push({
+                    // timestamp: last.timestamp,
+                    timestamp: lastTime.toISOString(),
+                    symbol: last.symbol,
+                    open: last.open,
+                    high: last.high,
+                    low: last.low,
+                    close: last.close,
+                    volume: last.volume,
+                    lowPass: last.lowPass,
+                    highPass: last.highPass,
+                });
             }
         }
         // let dates = [];
@@ -951,23 +985,58 @@ function _calculateId0(interval, callback) {
         let ifft9 = iffts.get('ifft9');
         let ifft100 = iffts.get('ifft100');
         const finalIdx = resultCnt - 1;
-        const final = {
-            id: 0,
-            timestamp: results[finalIdx].timestamp,
-            open: results[finalIdx].open,
-            high: results[finalIdx].high,
-            low: results[finalIdx].low,
-            close: results[finalIdx].close,
-            num_3: ifft3[finalIdx][0],
-            num_3i: ifft3[finalIdx][1],
-            num_6: ifft6[finalIdx][0],
-            num_6i: ifft6[finalIdx][1],
-            num_9: ifft9[finalIdx][0],
-            num_9i: ifft9[finalIdx][1],
-            num_100: ifft100[finalIdx][0],
-            num_100i: ifft100[finalIdx][1],
-        };
+        // const final = {
+        //     id: 0,
+        //     timestamp: results[finalIdx].timestamp,
+        //     open: results[finalIdx].open,
+        //     high: results[finalIdx].high,
+        //     low: results[finalIdx].low,
+        //     close: results[finalIdx].close,
+        //     num_3: ifft3[finalIdx][0],
+        //     num_3i: ifft3[finalIdx][1],
+        //     num_6: ifft6[finalIdx][0],
+        //     num_6i: ifft6[finalIdx][1],
+        //     num_9: ifft9[finalIdx][0],
+        //     num_9i: ifft9[finalIdx][1],
+        //     num_100: ifft100[finalIdx][0],
+        //     num_100i: ifft100[finalIdx][1],
+        // };
+        let final = [];
+        for (let idx = finalIdx; idx < 2048; idx++) {
+            // final.push({
+            //     id: 0,
+            //     timestamp: results[finalIdx].timestamp,
+            //     open: results[finalIdx].open,
+            //     high: results[finalIdx].high,
+            //     low: results[finalIdx].low,
+            //     close: results[finalIdx].close,
+            //     num_3: ifft3[finalIdx][0],
+            //     num_3i: ifft3[finalIdx][1],
+            //     num_6: ifft6[finalIdx][0],
+            //     num_6i: ifft6[finalIdx][1],
+            //     num_9: ifft9[finalIdx][0],
+            //     num_9i: ifft9[finalIdx][1],
+            //     num_100: ifft100[finalIdx][0],
+            //     num_100i: ifft100[finalIdx][1],
+            // });
+            final.push([
+                results[idx].timestamp,
+                results[idx].open,
+                results[idx].high,
+                results[idx].low,
+                results[idx].close,
+                ifft3[idx][0],
+                ifft3[idx][1],
+                ifft6[idx][0],
+                ifft6[idx][1],
+                ifft9[idx][0],
+                ifft9[idx][1],
+                ifft100[idx][0],
+                ifft100[idx][1],
+            ]);
+        }
         if (callback) {
+            // console.log('id0_calc', final);
             callback(final);
         }
     });
