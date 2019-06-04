@@ -1105,8 +1105,13 @@ service.calculateHiddenOrders2 = (timestamp) => {
                         console.log(error);
                         hiddenOrderCalcIntervalId = setTimeout(service.calculateHiddenOrders2, 30000, timestamp);
                     } else {
-                        timestamp = new Date(new Date(timestamp).getTime() + 60000).toISOString();
-                        hiddenOrderCalcIntervalId = setTimeout(service.calculateHiddenOrders2, 30000, timestamp);
+                        let oldTimestamp = new Date(timestamp);
+                        oldTimestamp.setHours(0, 0, 0, 0);
+                        sql = sprintf("DELETE FROM `hidden_orders` WHERE `timestamp` < '%s';", oldTimestamp.toISOString());
+                        dbConn.query(sql, undefined, (error, results, query) => {
+                            timestamp = new Date(new Date(timestamp).getTime() + 60000).toISOString();
+                            hiddenOrderCalcIntervalId = setTimeout(service.calculateHiddenOrders2, 30000, timestamp);
+                        });
                     }
                 });
             } else {
