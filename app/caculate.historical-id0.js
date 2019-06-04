@@ -46,7 +46,7 @@ const calculate = (interval, timestamp) => {
         }
 
         sql = sprintf("SELECT * FROM (SELECT * FROM `bitmex_data_%s` WHERE `timestamp` <= '%s' ORDER BY `timestamp` DESC LIMIT 2000) `tmp` ORDER BY `timestamp` ASC;", interval, id0LastTimestamp);
-        console.log(interval, id0LastTimestamp);
+        // console.log(interval, id0LastTimestamp);
         dbConn.query(sql, undefined, (error, results, fields) => {
             if (error) {
                 console.log(error);
@@ -153,6 +153,7 @@ const calculate = (interval, timestamp) => {
             // console.log(sql);
             dbConn.query(sql, [row], (error, results2, fields) => {
                 if (error) {
+                    console.log(error);
                     // console.log('saveId0Service-save-error', error);
                 } else {
                     // console.log('saveId0Service-save-success', interval);
@@ -160,6 +161,7 @@ const calculate = (interval, timestamp) => {
                 sql = "SELECT `timestamp` FROM `bitmex_data_%s` ORDER BY `timestamp` DESC LIMIT 1;";
                 dbConn.query(sql, [row], (error, results5, fields) => {
                     if (error) {
+                        console.log(error);
                         // console.log('saveId0Service-save-error', error);
                     } else {
                         console.log(interval, results5[0].timestamp, results[finalIdx].timestamp);
