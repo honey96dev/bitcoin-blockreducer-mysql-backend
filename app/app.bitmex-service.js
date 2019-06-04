@@ -1,9 +1,9 @@
 const request = require('request');
 const dbConn = require('./../_core/dbConn');
 const bitmexClient = require('./../_core/bitmexConn');
-var mysql = require('mysql2');
-var config = require('../_core/config');
-var Fili = require('fili');
+const mysql = require('mysql2');
+const config = require('../_core/config');
+const Fili = require('fili');
 const sprintfJs = require('sprintf-js');
 const sprintf = sprintfJs.sprintf,
     vsprintf = sprintfJs.vsprintf;
@@ -1002,7 +1002,7 @@ function _calculateId0(interval, callback) {
         //     num_100i: ifft100[finalIdx][1],
         // };
         let final = [];
-        for (let idx = finalIdx; idx < 2048; idx++) {
+        for (let idx = finalIdx; idx < finalIdx + 1; idx++) {
             // final.push({
             //     id: 0,
             //     timestamp: results[finalIdx].timestamp,
