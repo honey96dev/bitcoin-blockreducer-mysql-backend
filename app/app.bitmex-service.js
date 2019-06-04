@@ -1068,7 +1068,7 @@ service.calculateHiddenOrders2 = (timestamp) => {
         timestamp = new Date(new Date(requestData.timestamp).setSeconds(0, 0));
         timestamp = timestamp.toISOString();
         console.warn('hidden', timestamp);
-        return;
+        // return;
 
         let sql = sprintf("SELECT '%s' `timestamp`, H.symbol, H.side, SUM(H.size) `size`, SUM(H.price) `price`, H.tickDirection, H.trdMatchID, SUM(H.grossValue) `grossValue`, SUM(H.homeNotional) `homeNotional`, SUM(H.foreignNotional) `foreignNotional` FROM `hidden_orders` H WHERE `timestamp` LIKE '%s%s' GROUP BY `side`;", timestamp, timestamp.substr(0, 16), '%');
         console.log(sql);
