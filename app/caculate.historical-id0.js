@@ -158,7 +158,7 @@ const calculate = (interval, timestamp) => {
                 } else {
                     // console.log('saveId0Service-save-success', interval);
                 }
-                sql = "SELECT `timestamp` FROM `bitmex_data_%s` ORDER BY `timestamp` DESC LIMIT 1;";
+                sql = sprintf("SELECT `timestamp` FROM `bitmex_data_%s` ORDER BY `timestamp` DESC LIMIT 1;", interval);
                 dbConn.query(sql, [row], (error, results5, fields) => {
                     if (error) {
                         console.log(error);
