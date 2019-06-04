@@ -6,20 +6,20 @@ const sprintf = sprintfJs.sprintf,
     vsprintf = sprintfJs.vsprintf;
 const fftJs = require('fft-js');
 
-let intervalId = undefined;
+let hiddenOrderCalcIntervalId = undefined;
 
 const calculate = (timestamp) => {
-    if (intervalId) {
-        clearTimeout(intervalId);
+    if (hiddenOrderCalcIntervalId) {
+        clearTimeout(hiddenOrderCalcIntervalId);
     }
     let sql = sprintf("SELECT '%s' `timestamp`, H.symbol, H.side, SUM(H.size) `size`, SUM(H.price) `price`, H.tickDirection, H.trdMatchID, SUM(H.grossValue) `grossValue`, SUM(H.homeNotional) `homeNotional`, SUM(H.foreignNotional) `foreignNotional` FROM `hidden_orders` H WHERE `timestamp` LIKE '%s%s' GROUP BY `side`;", timestamp, timestamp.substr(0, 16), '%');
     console.log(sql);
 
-    // intervalId = setTimeout(calculate, 1000, timestamp);
+    // hiddenOrderCalcIntervalId = setTimeout(calculate, 1000, timestamp);
     dbConn.query(sql, undefined, (error, results, fields) => {
         if (error) {
             console.log(error);
-            intervalId = setTimeout(calculate, 1000, timestamp);
+            hiddenOrderCalcIntervalId = setTimeout(calculate, 30000, timestamp);
             return;
         }
         if (results.length > 0) {
@@ -45,15 +45,15 @@ const calculate = (timestamp) => {
             dbConn.query(sql, [rows], (error, results, query) => {
                 if (error) {
                     console.log(error);
-                    intervalId = setTimeout(calculate, 1000, timestamp);
+                    hiddenOrderCalcIntervalId = setTimeout(calculate, 30000, timestamp);
                 } else {
                     timestamp = new Date(new Date(timestamp).getTime() + 60000).toISOString();
-                    intervalId = setTimeout(calculate, 1000, timestamp);
+                    hiddenOrderCalcIntervalId = setTimeout(calculate, 30000, timestamp);
                 }
             });
         } else {
             timestamp = new Date(new Date(timestamp).getTime() + 60000).toISOString();
-            intervalId = setTimeout(calculate, 1000, timestamp);
+            hiddenOrderCalcIntervalId = setTimeout(calculate, 30000, timestamp);
         }
     });
 };

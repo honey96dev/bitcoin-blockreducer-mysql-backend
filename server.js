@@ -7,6 +7,7 @@ const appService = require('./app/app.service');
 const bitmexService = require('./app/app.bitmex-service');
 const config = require('./_core/config');
 const port = process.env.PORT || config.server.port;
+const dbConn = require('./_core/dbConn');
 var cluster = require('cluster');
 if (cluster.isMaster) {
     cluster.fork();
@@ -40,6 +41,17 @@ if (cluster.isWorker) {
     setTimeout(bitmexService.saveId0Service, 0, '1m');
     setTimeout(bitmexService.saveId0Service, 15000, '5m');
     setTimeout(bitmexService.saveId0Service, 30000, '1h');
+
+    let sql = "SELECT `timestamp` FROM `hidden_orders2` ORDER BY `timestamp` DESC LIMIT 1;";
+    dbConn.query(sql, undefined, (error, results, fields) => {
+        if (error || results.length == 0) {
+            bitmexService.calculateHiddenOrders2('2019-05-04T12:55:00.000Z');
+        } else {
+            let timestamp = new Date(new Date(results[0].timestamp).getTime() + 60000);
+            timestamp.setSeconds(0, 0);
+            bitmexService.calculateHiddenOrders2(timestamp.toISOString());
+        }
+    });
 }
 //
 // const app = express();
@@ -48,7 +60,7 @@ if (cluster.isWorker) {
 // app.use(express.static( './public' ));
 
 /**
- *  @project Call app.serive functions using init calling 
+ *  @project Call app.serive functions using init calling
  *  @implements Getting data from bitmext and store to database
  *  @description using price_5m_tbl and volume_5m_tbl
  */
