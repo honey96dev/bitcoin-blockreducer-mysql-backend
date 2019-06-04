@@ -61,7 +61,7 @@ const calculate = (timestamp) => {
 let sql = "SELECT `timestamp` FROM `hidden_orders2` ORDER BY `timestamp` DESC LIMIT 1;";
 dbConn.query(sql, undefined, (error, results, fields) => {
     if (error || results.length == 0) {
-        calculate('2019-05-04T12:34:00.000Z');
+        calculate('2019-05-04T12:55:00.000Z');
     } else {
         let timestamp = new Date(new Date(results[0].timestamp).getTime() + 60000);
         timestamp.setSeconds(0, 0);
