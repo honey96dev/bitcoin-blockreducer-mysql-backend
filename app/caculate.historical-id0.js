@@ -162,7 +162,7 @@ const calculate = (interval, timestamp) => {
                     if (error) {
                         // console.log('saveId0Service-save-error', error);
                     } else {
-                        // console.log('saveId0Service-save-success', interval);
+                        console.log(interval, results5[0].timestamp, results[finalIdx].timestamp);
                         if (results5 && results5.length > 0) {
                             if (results5[0].timestamp < results[finalIdx].timestamp) {
 
