@@ -164,7 +164,7 @@ const calculate = (interval, timestamp) => {
                     } else {
                         // console.log('saveId0Service-save-success', interval);
                         if (results5 && results5.length > 0) {
-                            if (results5[0].timestamp > results[finalIdx].timestamp) {
+                            if (results5[0].timestamp < results[finalIdx].timestamp) {
 
                                 console.warn(new Date(), interval, 'done');
                                 return;
