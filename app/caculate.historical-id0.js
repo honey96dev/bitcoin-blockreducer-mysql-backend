@@ -46,7 +46,7 @@ const calculate = (interval, timestamp) => {
         }
 
         sql = sprintf("SELECT * FROM (SELECT * FROM `bitmex_data_%s` WHERE `timestamp` <= '%s' ORDER BY `timestamp` DESC LIMIT 2000) `tmp` ORDER BY `timestamp` ASC;", interval, id0LastTimestamp);
-        // console.log(sql);
+        console.log(interval, id0LastTimestamp);
         dbConn.query(sql, undefined, (error, results, fields) => {
             if (error) {
                 console.log(error);
