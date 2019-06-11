@@ -23,7 +23,8 @@
     "path": "^0.12.7",
     "request": "^2.88.0",
     "sprintf-js": "^1.1.2",
-    "string-to-json": "^0.1.0"
+    "string-to-json": "^0.1.0",
+    "ws-reconnect": "^1.0.6"
   },
   "devDependencies": {
     "babel-cli": "^6.26.0",
