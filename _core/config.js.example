@@ -14,9 +14,9 @@ var config = {
     // },
     mysql: {
         connectionLimit : 10,
-        host: '108.61.186.24',
-        user: 'bitmex3536',
-        password: 'BitMex*95645636',
+        host: '127.0.0.1',
+        user: 'root',
+        password: '',
         database: 'blockreducerdb',
         port: 3306
     },
@@ -26,7 +26,14 @@ var config = {
         apiKeySecret: '',
         maxTableLen: 100,
         strUrl: 'https://www.bitmex.com/api/v1/trade/bucketed?binSize=5m&partial=false&symbol=XBTUSD&count=500&reverse=false&startTime='
-    }
+    },
+    deribit: {
+        testnet: false,
+        baseUrlTestnet: 'https://test.deribit.com',
+        baseUrlRealnet: 'https://www.deribit.com',
+        pathInstruments: '/api/v2/public/get_instruments',
+        pathTicker: '/api/v2/public/ticker',
+    },
 };
 
 module.exports = config;
