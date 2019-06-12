@@ -82,7 +82,25 @@ service.downloadTicker = () => {
         const option_symbol = sprintf("GS%02d%02d%02d%s%08d", expiration_timestamp.getFullYear() % 100, expiration_timestamp.getMonth() + 1, expiration_timestamp.getDate(), type_symbol, strike);
         const type = type_symbol == 'C' ? 'Call' : 'Put';
         service.detailRowsBuffer.push([
-            instrument.instrument_name, body.underlying_price, option_symbol, type, expiration_timestamp.toISOString(), creation_timestamp.toISOString(), instrument.strike, body.last_price, body.best_bid_price, body.best_ask_price, body.stats.volume, body.open_interest, body.mark_iv, body.bid_iv, body.iv_ask, body.greeks.delta, body.greeks.gamma, body.greeks.theta, body.greeks.vega
+            typeof instrument.instrument_name === 'undefined' ? '' : instrument.instrument_name,
+            typeof body.underlying_price === 'undefined' ? 0 : body.underlying_price,
+            option_symbol,
+            type,
+            expiration_timestamp.toISOString(),
+            creation_timestamp.toISOString(),
+            typeof instrument.strike === 'undefined' ? 0 : instrument.strike,
+            typeof body.last_price === 'undefined' ? 0 : body.last_price,
+            typeof body.best_bid_price === 'undefined' ? 0 : body.best_bid_price,
+            typeof body.best_ask_price === 'undefined' ? 0 : body.best_ask_price,
+            typeof body.stats.volume === 'undefined' ? 0 : body.stats.volume,
+            typeof body.open_interest === 'undefined' ? 0 : body.open_interest,
+            typeof body.mark_iv === 'undefined' ? 0 : body.mark_iv,
+            typeof body.bid_iv === 'undefined' ? 0 : body.bid_iv,
+            typeof body.iv_ask === 'undefined' ? 0 : body.iv_ask,
+            typeof body.greeks.delta === 'undefined' ? 0 : body.greeks.delta,
+            typeof body.greeks.gamma === 'undefined' ? 0 : body.greeks.gamma,
+            typeof body.greeks.theta === 'undefined' ? 0 : body.greeks.theta,
+            typeof body.greeks.vega === 'undefined' ? 0 : body.greeks.vega
         ]);
         console.log('detailed', service.detailRowsBuffer.length);
         if (service.instrumentsBuffer.length > 0) {
