@@ -32,7 +32,7 @@ service.downloadDeribitInstruments = () => {
     // console.log(url);
     request(url, null, (error, response, body) => {
         if (error) {
-            console.log(error);
+            console.warn(error);
             service.timeoutInstrumentsId = setTimeout(service.downloadDeribitInstruments, service.delayInstruments);
             return;
         }
@@ -64,7 +64,7 @@ service.downloadTicker = () => {
     // console.log(url);
     request(url, undefined, (error, response, body) => {
         if (error) {
-            console.log(error);
+            console.warn(error);
             if (service.instrumentsBuffer.length > 0) {
                 service.timeoutTickersId = setTimeout(service.downloadTicker, service.delayTicker);
             } else {
@@ -202,6 +202,7 @@ service.calculateChartData = () => {
     let sql = "DELETE FROM `deribit_instruments`;";
     dbConn.query(sql, undefined, (error, results, fields) => {
         if (error) {
+            console.warn(error);
             service.timeoutInstrumentsId = setTimeout(service.downloadDeribitInstruments, service.delayInstruments);
             return;
         }
@@ -209,12 +210,14 @@ service.calculateChartData = () => {
         console.log(service.detailRowsBuffer.length, sql);
         dbConn.query(sql, [service.detailRowsBuffer], (error, results, fields) => {
             if (error) {
+                console.warn(error);
                 service.timeoutInstrumentsId = setTimeout(service.downloadDeribitInstruments, service.delayInstruments);
                 return;
             }
             sql = sprintf("DELETE FROM `deribit_instruments2`;");
             dbConn.query(sql, undefined, (error, results, fields) => {
                 if (error) {
+                    console.warn(error);
                     service.timeoutInstrumentsId = setTimeout(service.downloadDeribitInstruments, service.delayInstruments);
                     return;
                 }
