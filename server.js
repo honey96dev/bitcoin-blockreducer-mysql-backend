@@ -19,9 +19,9 @@ if (cluster.isMaster) {
 }
 
 if (cluster.isWorker) {
-    bitmexService.readOrderBook();
-    bitmexService.readTrade();
-    bitmexService.commitOrdersData();
+    // bitmexService.readOrderBook();
+    // bitmexService.readTrade();
+    // bitmexService.commitOrdersData();
     setTimeout(bitmexService.commitVolumeData, 60000);
 
     bitmexService.downloadBitmexInstrumentData();
