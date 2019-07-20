@@ -9,7 +9,7 @@ const fftJs = require('fft-js');
 
 let service = {};
 
-let timeoutId = undefined;
+let timeoutId = {};
 let timeoutDelay = 30000;
 
 service.calculateFFT = (interval, timestamp) => {
@@ -20,8 +20,8 @@ service.calculateFFT = (interval, timestamp) => {
             timestamp = '2015-09-25T13:00:00.000Z';
         }
     }
-    if (timeoutId) {
-        clearTimeout(timeoutId);
+    if (timeoutId[interval]) {
+        clearTimeout(timeoutId[interval]);
     }
     let timeStep;
     if (interval == '5m') {
@@ -197,7 +197,7 @@ service.calculateFFT = (interval, timestamp) => {
             }
             // console.log('sql', query.sql);
         }
-        timeoutId = setTimeout(service.calculateFFT, timeoutDelay, interval, timestamp);
+        timeoutId[interval] = setTimeout(service.calculateFFT, timeoutDelay, interval, timestamp);
     });
 };
 
