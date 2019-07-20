@@ -6,10 +6,16 @@
 const appService = require('./app/app.service');
 const bitmexService = require('./app/app.bitmex-service');
 const deribitService = require('./app/app.deribit-service');
+const fftService = require('./app/app.fft-service');
 const config = require('./_core/config');
 const port = process.env.PORT || config.server.port;
 const dbConn = require('./_core/dbConn');
-var cluster = require('cluster');
+const sprintfJs = require('sprintf-js');
+const sprintf = sprintfJs.sprintf,
+    vsprintf = sprintfJs.vsprintf;
+const cluster = require('cluster');
+
+
 if (cluster.isMaster) {
     cluster.fork();
 
@@ -20,7 +26,7 @@ if (cluster.isMaster) {
 
 if (cluster.isWorker) {
     // bitmexService.readOrderBook();
-    // bitmexService.readTrade();
+    bitmexService.readTrade();
     // bitmexService.commitOrdersData();
     setTimeout(bitmexService.commitVolumeData, 60000);
 
@@ -55,6 +61,9 @@ if (cluster.isWorker) {
 
     setTimeout(deribitService.downloadDeribitInstruments, 0);
 }
+
+
+
 //
 // const app = express();
 // app.use(cors());
@@ -102,7 +111,28 @@ if (cluster.isWorker) {
 //     bitmexService.downloadBitmexData('1m', startTime);
 // });
 // ==========================================================================
-// setTimeout(bitmexService.calculateFFT, 0, '5m');
+if (cluster.isWorker) {
+    function calculateFFT(interval) {
+        // if (fftTimeoutId) {
+        //     clearTimeout(fftTimeoutId);
+        // }
+        // setTimeout(calculateFFT, 30000);
+        // let sql = "";
+        // bitmexService.calculateFFT('5m');
+        let sql = sprintf("SELECT * FROM `fft_%s` ORDER BY `timestamp` DESC LIMIT 1;", interval);
+        dbConn.query(sql, null, (error, result, fields) => {
+            let timestamp = '';
+            if (!!result && result.length > 0) {
+                timestamp = result[0].timestamp;
+            }
+            console.log(interval, timestamp);
+            fftService.calculateFFT(interval, timestamp);
+        });
+    }
+
+    calculateFFT('5m');
+    calculateFFT('1h');
+}
 // bitmexService.getLastTimestamp4Bucket('1m', function (startTime) {
 //     bitmexService.downloadBitmexData('1m', startTime);
 // });
